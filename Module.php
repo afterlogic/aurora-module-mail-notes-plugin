@@ -15,7 +15,7 @@ namespace Aurora\Modules\MailNotesPlugin;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
-	public function SaveNote($AccountId, $FolderFullName, $MessageUid, $Text)
+	public function SaveNote($AccountId, $FolderFullName, $MessageUid, $Text, $Subject)
 	{
 		$oMailDecorator = \Aurora\System\Api::GetModuleDecorator('Mail');
 		$oApiAccountsManager = $oMailDecorator->GetManager('accounts');
@@ -35,12 +35,11 @@ class Module extends \Aurora\System\Module\AbstractModule
 		{
 			$oMessage->SetTo($oToCollection);
 		}
-		$oMessage
-			->SetSubject($Text)
-			->AddText($Text, true)
-			->SetCustomHeader('X-Uniform-Type-Identifier', 'com.apple.mail-note')
-			->SetCustomHeader('X-Universally-Unique-Identifier', uniqid())
-		;
+		$oMessage->SetSubject($Subject);
+		$oMessage->AddText($Text, true);
+		$oMessage->SetCustomHeader('X-Uniform-Type-Identifier', 'com.apple.mail-note');
+		$oMessage->SetCustomHeader('X-Universally-Unique-Identifier', uniqid());
+		
 		$rMessageStream = \MailSo\Base\ResourceRegistry::CreateMemoryResource();
 		$iMessageStreamSize = \MailSo\Base\Utils::MultipleStreamWriter(
 			$oMessage->ToStream(true), array($rMessageStream), 8192, true, true, true);

@@ -10,8 +10,8 @@ var
 function GetPlainText(sHtml)
 {
 	return sHtml
-		.replace(/\r\n/g, '')
-		.replace(/\n/g, '')
+		.replace(/\r\n/g, ' ')
+		.replace(/\n/g, ' ')
 		.replace(/<style[^>]*>[^<]*<\/style>/gi, '\n')
 		.replace(/<br *\/{0,1}>/gi, '\n')
 		.replace(/<\/p>/gi, '\n')
@@ -75,7 +75,8 @@ CMessagePaneView.prototype.saveNote = function ()
 				'AccountId': oMessage.accountId(),
 				'FolderFullName': oMessage.folder(),
 				'MessageUid': oMessage.uid(),
-				'Text': this.messageText()
+				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
+				'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
 			},
 			oFolder = MailCache.getFolderByFullName(oMessage.accountId(), oMessage.folder())
 		;
