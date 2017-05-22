@@ -47,8 +47,6 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 	var oMessage = this.currentMessage();
 	if (oMessage)
 	{
-		console.log('oMessage.textRaw()', oMessage.textRaw());
-		console.log('GetPlainText(oMessage.textRaw())', GetPlainText(oMessage.textRaw()));
 		this.messageText(GetPlainText(oMessage.textRaw()));
 		this.isLoading(oMessage.uid() !== '' && !oMessage.completelyFilled());
 		if (!oMessage.completelyFilled())
