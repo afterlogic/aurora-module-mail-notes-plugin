@@ -9,6 +9,10 @@ var
 
 function GetPlainText(sHtml)
 {
+	if (typeof(sHtml) !=='string')
+	{
+		return '';
+	}
 	return sHtml
 		.replace(/\r\n/g, ' ')
 		.replace(/\n/g, ' ')
