@@ -1,0 +1,13 @@
+<div class="popup" style="display: none;">
+	<div class="mask"></div>
+	<span class="popup_panel">
+		<span class="close" data-bind="click: cancelPopup"></span>
+		<span class="popup_heading" data-bind="text: 'Create Note'"></span>
+		<textarea data-bind="value: messageText" class="input" style="width: 80%; height: 100px;"></textarea>
+		<div class="buttons">
+			<span class="button success" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CREATE'}, click: createNote"></span>
+			<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancelPopup"></span>
+		</div>
+	</span>
+	<span class="helper"></span>
+</div>

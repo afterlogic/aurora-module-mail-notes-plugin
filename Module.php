@@ -15,16 +15,10 @@ namespace Aurora\Modules\MailNotesPlugin;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
-	public function SaveNote($AccountId, $FolderFullName, $MessageUid, $Text, $Subject)
+	protected function populateFromOrigMessage($oApiMailManager, $oAccount, $FolderFullName, $MessageUid, &$oMessage)
 	{
-		$oMailDecorator = \Aurora\System\Api::GetModuleDecorator('Mail');
-		$oApiAccountsManager = $oMailDecorator->GetManager('accounts');
-		$oAccount = $oApiAccountsManager->getAccountById($AccountId);
-		$oApiMailManager = $oMailDecorator->GetManager('main');
 		$oOrigMessage = $oApiMailManager->getMessage($oAccount, $FolderFullName, $MessageUid);
 		
-		$oMessage = \MailSo\Mime\Message::NewInstance();
-		$oMessage->RegenerateMessageId();
 		$oFromCollection = $oOrigMessage->getFrom();
 		if (isset($oFromCollection) && $oFromCollection->Count() > 0)
 		{
@@ -35,18 +29,32 @@ class Module extends \Aurora\System\Module\AbstractModule
 		{
 			$oMessage->SetTo($oToCollection);
 		}
+	}
+	
+	public function SaveNote($AccountId, $FolderFullName, $Text, $Subject, $MessageUid = null)
+	{
+		$oMailDecorator = \Aurora\System\Api::GetModuleDecorator('Mail');
+		$oApiAccountsManager = $oMailDecorator->GetManager('accounts');
+		$oAccount = $oApiAccountsManager->getAccountById($AccountId);
+		$oApiMailManager = $oMailDecorator->GetManager('main');
+		
+		$oMessage = \MailSo\Mime\Message::NewInstance();
+		$oMessage->RegenerateMessageId();
 		$oMessage->SetSubject($Subject);
 		$oMessage->AddText($Text, true);
 		$oMessage->SetCustomHeader('X-Uniform-Type-Identifier', 'com.apple.mail-note');
 		$oMessage->SetCustomHeader('X-Universally-Unique-Identifier', uniqid());
 		
+		if (!empty($MessageUid))
+		{
+			$this->populateFromOrigMessage($oApiMailManager, $oAccount, $FolderFullName, $MessageUid, $oMessage);
+			$oApiMailManager->deleteMessage($oAccount, $FolderFullName, array($MessageUid));
+		}
+		
 		$rMessageStream = \MailSo\Base\ResourceRegistry::CreateMemoryResource();
-		$iMessageStreamSize = \MailSo\Base\Utils::MultipleStreamWriter(
-			$oMessage->ToStream(true), array($rMessageStream), 8192, true, true, true);
+		$iMessageStreamSize = \MailSo\Base\Utils::MultipleStreamWriter($oMessage->ToStream(true), array($rMessageStream), 8192, true, true, true);
 		$iNewUid = 0;
 		$oApiMailManager->appendMessageFromStream($oAccount, $rMessageStream, $FolderFullName, $iMessageStreamSize, $iNewUid);
-		
-		$oApiMailManager->deleteMessage($oAccount, $FolderFullName, array($MessageUid));
 		
 		return $iNewUid;
 	}
