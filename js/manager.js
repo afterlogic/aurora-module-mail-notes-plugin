@@ -34,11 +34,13 @@ module.exports = function (oAppData) {
 									var CreateNotePopup = require('modules/%ModuleName%/js/popups/CreateNotePopup.js');
 									Popups.showPopup(CreateNotePopup, [oParams.MailCache, 'Notes']);
 								}, 'New Note');
+								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
 							}
 							else
 							{
 								oParams.View.removeCustomPreviewPane('%ModuleName%');
 								oParams.View.removeCustomBigButton('%ModuleName%');
+								oParams.View.resetDisabledTools('%ModuleName%', []);
 							}
 						});
 					}
