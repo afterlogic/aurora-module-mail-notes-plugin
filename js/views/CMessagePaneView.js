@@ -68,7 +68,6 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 {
 	MailCache.setCurrentMessage(oParams.Uid, oParams.Folder);
-	console.log(oParams);
 	if (oParams.Custom === 'create-note')
 	{
 		this.messageText('');
