@@ -14,7 +14,7 @@ module.exports = function (oAppData) {
 	if (bNormalUser)
 	{
 		return {
-			start: function () {
+			start: function (oModulesManager) {
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
@@ -31,8 +31,9 @@ module.exports = function (oAppData) {
 							{
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
-									var CreateNotePopup = require('modules/%ModuleName%/js/popups/CreateNotePopup.js');
-									Popups.showPopup(CreateNotePopup, [oParams.MailCache, 'Notes']);
+									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note']);
+//									var CreateNotePopup = require('modules/%ModuleName%/js/popups/CreateNotePopup.js');
+//									Popups.showPopup(CreateNotePopup, [oParams.MailCache, 'Notes']);
 								}, 'New Note');
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
 							}

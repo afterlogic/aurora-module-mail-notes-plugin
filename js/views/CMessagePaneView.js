@@ -41,6 +41,7 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 	this.currentMessage.subscribe(this.onCurrentMessageSubscribe, this);
 	this.messageText = ko.observable('');
 	this.isLoading = ko.observable(false);
+	this.createMode = ko.observable(false);
 }
 
 CMessagePaneView.prototype.ViewTemplate = '%ModuleName%_MessagePaneView';
@@ -67,9 +68,47 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 {
 	MailCache.setCurrentMessage(oParams.Uid, oParams.Folder);
+	console.log(oParams);
+	if (oParams.Custom === 'create-note')
+	{
+		this.messageText('');
+		this.createMode(true);
+	}
+	else
+	{
+		this.createMode(false);
+	}
 };
 
 CMessagePaneView.prototype.saveNote = function ()
+{
+	if (this.createMode())
+	{
+		this.saveNewNote();
+	}
+	else
+	{
+		this.saveEditedNote();
+	}
+};
+
+CMessagePaneView.prototype.saveNewNote = function ()
+{
+	var
+		oFolder = MailCache.getCurrentFolder(),
+		oParameters = {
+			'AccountId': MailCache.currentAccountId(),
+			'FolderFullName': oFolder.fullName(),
+			'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
+			'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+		}
+	;
+	Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
+		MailCache.executeCheckMail(true);
+	}, this);
+};
+
+CMessagePaneView.prototype.saveEditedNote = function ()
 {
 	var oMessage = this.currentMessage();
 	if (oMessage)

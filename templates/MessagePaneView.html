@@ -1,6 +1,6 @@
-<div data-bind="if: currentMessage" style="padding: 50px; font-size: 16px;">
+<div data-bind="if: currentMessage() || createMode()" style="padding: 50px; font-size: 16px; height: 100%">
 	<div class="message_body_info" data-bind="visible: isLoading, i18n: {'key': 'COREWEBCLIENT/INFO_LOADING'}"></div>
-	<textarea data-bind="value: messageText, visible: !isLoading()" class="input" style="width: 80%; height: 100px;"></textarea>
+	<textarea data-bind="value: messageText, visible: !isLoading()" style="width: 99%; height: 87%; border: none; outline: none;"></textarea>
 	<div class="buttons" style="text-align: left; margin-top: 30px;" data-bind="visible: !isLoading()">
 		<span class="button" data-bind="i18n: {'key': 'MAILWEBCLIENT/ACTION_SAVE'}, click: saveNote"></span>
 	</div>
