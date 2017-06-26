@@ -33,10 +33,10 @@ class Module extends \Aurora\System\Module\AbstractModule
 	
 	public function SaveNote($AccountId, $FolderFullName, $Text, $Subject, $MessageUid = null)
 	{
-		$oMailDecorator = \Aurora\System\Api::GetModuleDecorator('Mail');
-		$oApiAccountsManager = $oMailDecorator->GetManager('accounts');
+		$oMailModule = \Aurora\System\Api::GetModule('Mail');
+		$oApiAccountsManager = $oMailModule->oApiAccountsManager;
 		$oAccount = $oApiAccountsManager->getAccountById($AccountId);
-		$oApiMailManager = $oMailDecorator->GetManager('main');
+		$oApiMailManager = $oMailModule->oApiMailManager;
 		
 		$oMessage = \MailSo\Mime\Message::NewInstance();
 		$oMessage->RegenerateMessageId();
