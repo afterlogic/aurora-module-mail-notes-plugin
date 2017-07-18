@@ -1,9 +1,11 @@
 'use strict';
 
 var
+	_ = require('underscore'),
 	ko = require('knockout'),
 	
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
+	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	MailCache = null
 ;
 
@@ -28,6 +30,7 @@ function GetPlainText(sHtml)
 		.replace(/&quot;/g, '"')
 	;
 };
+
 /**
  * @constructor
  * @param {object} oMailCache
@@ -40,6 +43,11 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 	this.currentMessage = MailCache.currentMessage;
 	this.currentMessage.subscribe(this.onCurrentMessageSubscribe, this);
 	this.messageText = ko.observable('');
+	this.messageText.focused = ko.observable(false);
+	ko.computed(function () {
+		this.messageText();
+		this.messageText.focused(true);
+	}, this).extend({ throttle: 5 }); ;
 	this.isLoading = ko.observable(false);
 	this.createMode = ko.observable(false);
 }
@@ -63,6 +71,24 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 		}
 	}
 	
+};
+
+/**
+ * @param {Object} $MailViewDom
+ */
+CMessagePaneView.prototype.onBind = function ($MailViewDom)
+{
+	ModulesManager.run('SessionTimeoutWeblient', 'registerFunction', [_.bind(function () {
+		this.saveNote();
+	}, this)]);
+	
+	$(document).on('keydown', $.proxy(function(ev) {
+		if (ev.ctrlKey && ev.keyCode === Enums.Key.s)
+		{
+			ev.preventDefault();
+			this.saveNote();
+		}
+	}, this));
 };
 
 CMessagePaneView.prototype.onRoute = function (aParams, oParams)
