@@ -6,7 +6,6 @@ module.exports = function (oAppData) {
 		_ = require('underscore'),
 				
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
-		Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 
 		bNormalUser = App.getUserRole() === Enums.UserRole.NormalUser
 	;
@@ -32,8 +31,6 @@ module.exports = function (oAppData) {
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
 									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note']);
-//									var CreateNotePopup = require('modules/%ModuleName%/js/popups/CreateNotePopup.js');
-//									Popups.showPopup(CreateNotePopup, [oParams.MailCache, 'Notes']);
 								}, 'New Note');
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
 							}
