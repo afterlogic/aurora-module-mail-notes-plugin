@@ -15,19 +15,22 @@ namespace Aurora\Modules\MailNotesPlugin;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
-	protected function populateFromOrigMessage($oApiMailManager, $oAccount, $FolderFullName, $MessageUid, &$oMessage)
+	protected function populateFromOrigMessage($AccountId, $FolderFullName, $MessageUid, &$oMessage)
 	{
-		$oOrigMessage = $oApiMailManager->getMessage($oAccount, $FolderFullName, $MessageUid);
+		$oOrigMessage = \Aurora\Modules\Mail::Decorator()->GetMessage($AccountId, $FolderFullName, $MessageUid);
 		
-		$oFromCollection = $oOrigMessage->getFrom();
-		if (isset($oFromCollection) && $oFromCollection->Count() > 0)
+		if ($oOrigMessage)
 		{
-			$oMessage->SetFrom($oFromCollection->GetByIndex(0));
-		}
-		$oToCollection = $oOrigMessage->getTo();
-		if (isset($oToCollection) && $oToCollection->Count() > 0)
-		{
-			$oMessage->SetTo($oToCollection);
+			$oFromCollection = $oOrigMessage->getFrom();
+			if (isset($oFromCollection) && $oFromCollection->Count() > 0)
+			{
+				$oMessage->SetFrom($oFromCollection->GetByIndex(0));
+			}
+			$oToCollection = $oOrigMessage->getTo();
+			if (isset($oToCollection) && $oToCollection->Count() > 0)
+			{
+				$oMessage->SetTo($oToCollection);
+			}
 		}
 	}
 	
@@ -47,7 +50,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		
 		if (!empty($MessageUid))
 		{
-			$this->populateFromOrigMessage($oApiMailManager, $oAccount, $FolderFullName, $MessageUid, $oMessage);
+			$this->populateFromOrigMessage($AccountId, $FolderFullName, $MessageUid, $oMessage);
 			$oApiMailManager->deleteMessage($oAccount, $FolderFullName, array($MessageUid));
 		}
 		
