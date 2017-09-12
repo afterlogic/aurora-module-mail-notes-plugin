@@ -15,6 +15,26 @@ namespace Aurora\Modules\MailNotesPlugin;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
+	public function init()
+	{
+		$this->subscribeEvent('Mail::GetFolders::before', array($this, 'onBeforeGetFolders'));
+	}
+	
+	public function onBeforeGetFolders(&$aArgs, &$mResult)
+	{
+		$oMailModule = \Aurora\System\Api::GetModule('Mail');
+		$oApiAccountsManager = $oMailModule->oApiAccountsManager;
+		$oApiMailManager = $oMailModule->oApiMailManager;
+		
+		$iAccountID = $aArgs['AccountID'];
+		$oAccount = $oApiAccountsManager->getAccountById($iAccountID);
+		$aResult = $oApiMailManager->getFolderListInformation($oAccount, array('Notes'));
+		if (empty($aResult))
+		{
+			$oMailModule->CreateFolder($iAccountID, 'Notes', '', '/');
+		}
+	}
+	
 	protected function populateFromOrigMessage($AccountId, $FolderFullName, $MessageUid, &$oMessage)
 	{
 		$oOrigMessage = \Aurora\Modules\Mail\Module::Decorator()->GetMessage($AccountId, $FolderFullName, $MessageUid);
