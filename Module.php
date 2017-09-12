@@ -17,7 +17,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 {
 	protected function populateFromOrigMessage($AccountId, $FolderFullName, $MessageUid, &$oMessage)
 	{
-		$oOrigMessage = \Aurora\Modules\Mail::Decorator()->GetMessage($AccountId, $FolderFullName, $MessageUid);
+		$oOrigMessage = \Aurora\Modules\Mail\Module::Decorator()->GetMessage($AccountId, $FolderFullName, $MessageUid);
 		
 		if ($oOrigMessage)
 		{
