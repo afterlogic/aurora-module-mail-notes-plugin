@@ -4,6 +4,8 @@ var
 	_ = require('underscore'),
 	ko = require('knockout'),
 	
+	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
+	
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	MailCache = null
@@ -49,7 +51,11 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 		this.messageText.focused(true);
 	}, this).extend({ throttle: 5 }); ;
 	this.isLoading = ko.observable(false);
+	this.isSaving = ko.observable(false);
 	this.createMode = ko.observable(false);
+	this.saveButtonText = ko.computed(function () {
+		return this.isSaving() ? TextUtils.i18n('MAILWEBCLIENT/ACTION_SAVE_IN_PROGRESS') : TextUtils.i18n('MAILWEBCLIENT/ACTION_SAVE');
+	}, this);
 }
 
 CMessagePaneView.prototype.ViewTemplate = '%ModuleName%_MessagePaneView';
@@ -69,8 +75,8 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 				sbscr.dispose();
 			}, this);
 		}
+		this.isSaving(false);
 	}
-	
 };
 
 /**
@@ -103,6 +109,7 @@ CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 	{
 		this.createMode(false);
 	}
+	this.isSaving(false);
 };
 
 CMessagePaneView.prototype.saveNote = function ()
@@ -128,7 +135,13 @@ CMessagePaneView.prototype.saveNewNote = function ()
 			'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
 		}
 	;
+	this.isSaving(true);
 	Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
+		this.isSaving(false);
+		if (oResponse.Result)
+		{
+			ModulesManager.run('MailWebclient', 'setCustomRouting', ['Notes', 1, '', '', '', '']);
+		}
 		MailCache.executeCheckMail(true);
 	}, this);
 };
@@ -150,7 +163,9 @@ CMessagePaneView.prototype.saveEditedNote = function ()
 		;
 		oFolder.markDeletedByUids([oMessage.uid()]);
 		MailCache.excludeDeletedMessages();
+		this.isSaving(true);
 		Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
+			this.isSaving(false);
 			if (oResponse.Result)
 			{
 				var sbscr = MailCache.messagesLoading.subscribe(function () {
