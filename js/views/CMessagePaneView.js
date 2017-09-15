@@ -54,7 +54,7 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 	this.isSaving = ko.observable(false);
 	this.createMode = ko.observable(false);
 	this.saveButtonText = ko.computed(function () {
-		return this.isSaving() ? TextUtils.i18n('MAILWEBCLIENT/ACTION_SAVE_IN_PROGRESS') : TextUtils.i18n('MAILWEBCLIENT/ACTION_SAVE');
+		return this.isSaving() ? TextUtils.i18n('COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS') : TextUtils.i18n('COREWEBCLIENT/ACTION_SAVE');
 	}, this);
 }
 
@@ -185,6 +185,11 @@ CMessagePaneView.prototype.saveEditedNote = function ()
 			MailCache.executeCheckMail(true);
 		}, this);
 	}
+};
+
+CMessagePaneView.prototype.cancel = function ()
+{
+	ModulesManager.run('MailWebclient', 'setCustomRouting', ['Notes', 1, '', '', '', '']);
 };
 
 module.exports = CMessagePaneView;
