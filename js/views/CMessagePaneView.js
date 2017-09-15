@@ -140,7 +140,13 @@ CMessagePaneView.prototype.saveNewNote = function ()
 		this.isSaving(false);
 		if (oResponse.Result)
 		{
-			ModulesManager.run('MailWebclient', 'setCustomRouting', ['Notes', 1, '', '', '', '']);
+			var sbscr = MailCache.messagesLoading.subscribe(function () {
+				if (!MailCache.messagesLoading())
+				{
+					this.fRouteMessageView(oParameters.FolderFullName, oResponse.Result);
+					sbscr.dispose();
+				}
+			}, this);
 		}
 		MailCache.executeCheckMail(true);
 	}, this);
@@ -171,7 +177,7 @@ CMessagePaneView.prototype.saveEditedNote = function ()
 				var sbscr = MailCache.messagesLoading.subscribe(function () {
 					if (!MailCache.messagesLoading())
 					{
-						this.fRouteMessageView(oMessage.folder(), oResponse.Result);
+						this.fRouteMessageView(oParameters.FolderFullName, oResponse.Result);
 						sbscr.dispose();
 					}
 				}, this);
