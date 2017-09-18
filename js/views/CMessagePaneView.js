@@ -7,6 +7,7 @@ var
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
+	Api = require('%PathToCoreWebclientModule%/js/Api.js'),
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	MailCache = null
 ;
@@ -148,6 +149,10 @@ CMessagePaneView.prototype.saveNewNote = function ()
 				}
 			}, this);
 		}
+		else
+		{
+			Api.showErrorByCode(oResponse, TextUtils.i18n('%MODULENAME%/ERROR_NOTE_SAVING'));
+		}
 		MailCache.executeCheckMail(true);
 	}, this);
 };
@@ -181,6 +186,10 @@ CMessagePaneView.prototype.saveEditedNote = function ()
 						sbscr.dispose();
 					}
 				}, this);
+			}
+			else
+			{
+				Api.showErrorByCode(oResponse, TextUtils.i18n('%MODULENAME%/ERROR_NOTE_SAVING'));
 			}
 			MailCache.executeCheckMail(true);
 		}, this);
