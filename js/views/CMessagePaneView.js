@@ -4,6 +4,9 @@ var
 	_ = require('underscore'),
 	ko = require('knockout'),
 	
+//	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
+//	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
+	
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
@@ -52,6 +55,8 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 		this.messageText();
 		this.messageText.focused(true);
 	}, this).extend({ throttle: 5 }); ;
+//	this.sMessageUniq = '';
+//	this.sMessageText = '';
 	this.isLoading = ko.observable(false);
 	this.isSaving = ko.observable(false);
 	this.createMode = ko.observable(false);
@@ -66,6 +71,18 @@ CMessagePaneView.prototype.ViewConstructorName = 'CMessagePaneView';
 CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 {
 	var oMessage = this.currentMessage();
+//	
+//	if ((!oMessage || this.sMessageUniq !== '' && this.sMessageUniq !== oMessage.sUniq) && this.sMessageText !== this.messageText())
+//	{
+//		Popups.showPopup(ConfirmPopup, [
+//			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
+//			_.bind(function (bSave) {console.log('bSave', bSave);}, this),
+//			'',
+//			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
+//			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
+//		]);
+//	}
+	
 	if (oMessage)
 	{
 		if (oMessage.isPlain())
@@ -76,6 +93,8 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 		{
 			this.messageText(GetPlainText($(oMessage.text()).html()));
 		}
+//		this.sMessageUniq = oMessage.sUniq;
+//		this.sMessageText = this.messageText();
 		this.isLoading(oMessage.uid() !== '' && !oMessage.completelyFilled());
 		if (!oMessage.completelyFilled())
 		{
@@ -120,6 +139,20 @@ CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 	}
 	this.isSaving(false);
 };
+
+//CMessagePaneView.prototype.onHide = function ()
+//{
+//	if (this.sMessageText !== this.messageText())
+//	{
+//		Popups.showPopup(ConfirmPopup, [
+//			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
+//			_.bind(function (bSave) {console.log('bSave', bSave);}, this),
+//			'',
+//			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
+//			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
+//		]);
+//	}
+//};
 
 CMessagePaneView.prototype.saveNote = function ()
 {
