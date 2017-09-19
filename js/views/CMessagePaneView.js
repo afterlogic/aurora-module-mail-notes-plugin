@@ -24,6 +24,7 @@ function GetPlainText(sHtml)
 		.replace(/<style[^>]*>[^<]*<\/style>/gi, '\n')
 		.replace(/<br *\/{0,1}>/gi, '\n')
 		.replace(/<\/p>/gi, '\n')
+		.replace(/<\/div>/gi, '\n')
 		.replace(/<a [^>]*href="([^"]*?)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)')
 		.replace(/<[^>]*>/g, '')
 		.replace(/&nbsp;/g, ' ')
@@ -67,7 +68,14 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 	var oMessage = this.currentMessage();
 	if (oMessage)
 	{
-		this.messageText(GetPlainText(oMessage.textRaw()));
+		if (oMessage.isPlain())
+		{
+			this.messageText(oMessage.textRaw());
+		}
+		else
+		{
+			this.messageText(GetPlainText($(oMessage.text()).html()));
+		}
 		this.isLoading(oMessage.uid() !== '' && !oMessage.completelyFilled());
 		if (!oMessage.completelyFilled())
 		{
