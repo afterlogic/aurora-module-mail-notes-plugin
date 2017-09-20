@@ -4,8 +4,8 @@ var
 	_ = require('underscore'),
 	ko = require('knockout'),
 	
-//	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
-//	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
+	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
+	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
 	
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	
@@ -55,8 +55,8 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 		this.messageText();
 		this.messageText.focused(true);
 	}, this).extend({ throttle: 5 }); ;
-//	this.sMessageUniq = '';
-//	this.sMessageText = '';
+	this.sMessageUid = '';
+	this.sMessageText = '';
 	this.isLoading = ko.observable(false);
 	this.isSaving = ko.observable(false);
 	this.createMode = ko.observable(false);
@@ -70,18 +70,42 @@ CMessagePaneView.prototype.ViewConstructorName = 'CMessagePaneView';
 
 CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 {
-	var oMessage = this.currentMessage();
-//	
-//	if ((!oMessage || this.sMessageUniq !== '' && this.sMessageUniq !== oMessage.sUniq) && this.sMessageText !== this.messageText())
-//	{
-//		Popups.showPopup(ConfirmPopup, [
-//			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
-//			_.bind(function (bSave) {console.log('bSave', bSave);}, this),
-//			'',
-//			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
-//			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
-//		]);
-//	}
+	var
+		oMessage = this.currentMessage(),
+		oParameters = {
+			'AccountId': MailCache.currentAccountId(),
+			'FolderFullName': 'Notes',
+			'MessageUid': this.sMessageUid,
+			'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
+			'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+		}
+	;
+	
+	if ((!oMessage || oMessage && this.sMessageUid !== oMessage.uid()) && this.sMessageText !== this.messageText())
+	{
+		Popups.showPopup(ConfirmPopup, [
+			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
+			_.bind(function (bSave) {
+				if (bSave)
+				{
+					var oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), 'Notes');
+					oFolder.markDeletedByUids([oParameters.MessageUid]);
+					MailCache.excludeDeletedMessages();
+					this.sMessageText = this.messageText();
+					Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
+						if (!oResponse.Result)
+						{
+							Api.showErrorByCode(oResponse, TextUtils.i18n('%MODULENAME%/ERROR_NOTE_SAVING'));
+						}
+						MailCache.executeCheckMail(true);
+					}, this);
+				}
+			}, this),
+			'',
+			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
+			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
+		]);
+	}
 	
 	if (oMessage)
 	{
@@ -93,8 +117,8 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 		{
 			this.messageText(GetPlainText($(oMessage.text()).html()));
 		}
-//		this.sMessageUniq = oMessage.sUniq;
-//		this.sMessageText = this.messageText();
+		this.sMessageUid = oMessage.uid();
+		this.sMessageText = this.messageText();
 		this.isLoading(oMessage.uid() !== '' && !oMessage.completelyFilled());
 		if (!oMessage.completelyFilled())
 		{
@@ -104,6 +128,12 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 			}, this);
 		}
 		this.isSaving(false);
+	}
+	else
+	{
+		this.sMessageUid = '';
+		this.sMessageText = '';
+		this.messageText('');
 	}
 };
 
@@ -140,19 +170,24 @@ CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 	this.isSaving(false);
 };
 
-//CMessagePaneView.prototype.onHide = function ()
-//{
-//	if (this.sMessageText !== this.messageText())
-//	{
-//		Popups.showPopup(ConfirmPopup, [
-//			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
-//			_.bind(function (bSave) {console.log('bSave', bSave);}, this),
-//			'',
-//			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
-//			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
-//		]);
-//	}
-//};
+CMessagePaneView.prototype.onHide = function ()
+{
+	if (this.sMessageText !== this.messageText())
+	{
+		Popups.showPopup(ConfirmPopup, [
+			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
+			_.bind(function (bSave) {
+				if (bSave)
+				{
+					this.saveEditedNote();
+				}
+			}, this),
+			'',
+			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
+			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
+		]);
+	}
+};
 
 CMessagePaneView.prototype.saveNote = function ()
 {
@@ -178,6 +213,7 @@ CMessagePaneView.prototype.saveNewNote = function ()
 		}
 	;
 	this.isSaving(true);
+	this.sMessageText = this.messageText();
 	Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
 		this.isSaving(false);
 		if (oResponse.Result)
@@ -198,24 +234,28 @@ CMessagePaneView.prototype.saveNewNote = function ()
 	}, this);
 };
 
-CMessagePaneView.prototype.saveEditedNote = function ()
+CMessagePaneView.prototype.saveEditedNote = function (oMessage)
 {
-	var oMessage = this.currentMessage();
+	if (!oMessage)
+	{
+		oMessage = this.currentMessage();
+	}
 	if (oMessage)
 	{
 		var
 			oParameters = {
-				'AccountId': oMessage.accountId(),
+				'AccountId': MailCache.currentAccountId(),
 				'FolderFullName': oMessage.folder(),
 				'MessageUid': oMessage.uid(),
 				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
 				'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
 			},
-			oFolder = MailCache.getFolderByFullName(oMessage.accountId(), oMessage.folder())
+			oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), oMessage.folder())
 		;
 		oFolder.markDeletedByUids([oMessage.uid()]);
 		MailCache.excludeDeletedMessages();
 		this.isSaving(true);
+		this.sMessageText = this.messageText();
 		Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
 			this.isSaving(false);
 			if (oResponse.Result)
@@ -239,6 +279,7 @@ CMessagePaneView.prototype.saveEditedNote = function ()
 
 CMessagePaneView.prototype.cancel = function ()
 {
+	this.sMessageText = this.messageText();
 	ModulesManager.run('MailWebclient', 'setCustomRouting', ['Notes', 1, '', '', '', '']);
 };
 
