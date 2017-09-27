@@ -6,8 +6,6 @@
 		"afterlogic/aurora-framework": "~0.3"
 	},
 	"extra": {
-		"installer-name": "MailNotesPlugin",
-		"include-in-mobile": false,
-		"include-in-desktop": true
+		"installer-name": "MailNotesPlugin"
 	}
 }
