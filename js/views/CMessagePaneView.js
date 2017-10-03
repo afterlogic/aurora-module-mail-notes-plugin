@@ -9,6 +9,7 @@ var
 	
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	
+	App = require('%PathToCoreWebclientModule%/js/App.js'),
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	Api = require('%PathToCoreWebclientModule%/js/Api.js'),
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
@@ -81,7 +82,7 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 		}
 	;
 	
-	if ((!oMessage || oMessage && this.sMessageUid !== oMessage.uid()) && this.sMessageText !== this.messageText())
+	if (!oMessage && this.sMessageText !== this.messageText())
 	{
 		Popups.showPopup(ConfirmPopup, [
 			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
@@ -151,6 +152,50 @@ CMessagePaneView.prototype.onBind = function ($MailViewDom)
 		{
 			ev.preventDefault();
 			this.saveNote();
+		}
+	}, this));
+	
+	App.subscribeEvent('CoreWebclient::SelectListItem::before', _.bind(function (oParams) {
+		var
+			oMessage = oParams.Item,
+			oParameters = {
+				'AccountId': MailCache.currentAccountId(),
+				'FolderFullName': 'Notes',
+				'MessageUid': this.sMessageUid,
+				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
+				'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+			}
+		;
+		
+		if (oMessage  && oMessage.constructor.name === 'CMessageModel' && this.sMessageUid !== oMessage.uid() && this.sMessageText !== this.messageText())
+		{
+			oParams.Cancel = true;
+			Popups.showPopup(ConfirmPopup, [
+				TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
+				_.bind(function (bSave) {
+					if (bSave)
+					{
+						var oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), 'Notes');
+						oFolder.markDeletedByUids([oParameters.MessageUid]);
+						MailCache.excludeDeletedMessages();
+						this.sMessageText = this.messageText();
+						Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
+							if (!oResponse.Result)
+							{
+								Api.showErrorByCode(oResponse, TextUtils.i18n('%MODULENAME%/ERROR_NOTE_SAVING'));
+							}
+							MailCache.executeCheckMail(true);
+						}, this);
+					}
+					if (_.isFunction(oParams.ProceedSelectionHandler))
+					{
+						oParams.ProceedSelectionHandler();
+					}
+				}, this),
+				'',
+				TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
+				TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
+			]);
 		}
 	}, this));
 };
