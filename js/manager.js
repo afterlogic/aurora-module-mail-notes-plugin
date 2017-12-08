@@ -2,8 +2,11 @@
 
 module.exports = function (oAppData) {
 	var
-		ko = require('knockout'),
 		_ = require('underscore'),
+		$ = require('jquery'),
+		ko = require('knockout'),
+		
+		TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 				
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 
@@ -31,7 +34,7 @@ module.exports = function (oAppData) {
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
 									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note']);
-								}, 'New Note');
+								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'));
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
 							}
 							else
