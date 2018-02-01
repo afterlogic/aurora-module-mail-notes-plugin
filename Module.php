@@ -28,10 +28,12 @@ class Module extends \Aurora\System\Module\AbstractModule
 		
 		$iAccountID = $aArgs['AccountID'];
 		$oAccount = $oApiAccountsManager->getAccountById($iAccountID);
-		$aResult = $oApiMailManager->getFolderListInformation($oAccount, array('Notes'));
+		$oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
+		$sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
+		$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'));
 		if (empty($aResult))
 		{
-			$oMailModule->CreateFolder($iAccountID, 'Notes', '', '/');
+			$oMailModule->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
 		}
 	}
 	
