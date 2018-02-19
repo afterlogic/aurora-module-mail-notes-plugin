@@ -58,6 +58,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	
 	public function SaveNote($AccountId, $FolderFullName, $Text, $Subject, $MessageUid = null)
 	{
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		$oMailModule = \Aurora\System\Api::GetModule('Mail');
 		$oApiAccountsManager = $oMailModule->oApiAccountsManager;
 		$oAccount = $oApiAccountsManager->getAccountById($AccountId);
