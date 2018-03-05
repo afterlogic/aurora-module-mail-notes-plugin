@@ -23,6 +23,12 @@ function GetPlainText(sHtml)
 	{
 		return '';
 	}
+	
+	var fReplacer = function (sMatch, sLink, sLinkName) {
+		var sClearLink = sLink.replace(/(\w{3,4}:\/\/)(.*)/, '$2');
+		return (sLink === sLinkName || sClearLink === sLinkName) ? sLink : sLinkName + ' (' + sLink + ')';
+	};
+	
 	return sHtml
 		.replace(/\r\n/g, ' ')
 		.replace(/\n/g, ' ')
@@ -30,7 +36,7 @@ function GetPlainText(sHtml)
 		.replace(/<br *\/{0,1}>/gi, '\n')
 		.replace(/<\/p>/gi, '\n')
 		.replace(/<\/div>/gi, '\n')
-		.replace(/<a [^>]*href="([^"]*?)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+		.replace(/<a [^>]*href="([^"]*?)"[^>]*>(.*?)<\/a>/gi, fReplacer)
 		.replace(/<[^>]*>/g, '')
 		.replace(/&nbsp;/g, ' ')
 		.replace(/&lt;/g, '<')
