@@ -2,6 +2,7 @@
 
 var
 	_ = require('underscore'),
+	$ = require('jquery'),
 	ko = require('knockout'),
 	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
@@ -69,6 +70,24 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 CMessagePaneView.prototype.ViewTemplate = '%ModuleName%_MessagePaneView';
 CMessagePaneView.prototype.ViewConstructorName = 'CMessagePaneView';
 
+CMessagePaneView.prototype.getSubjectFromText = function (sText)
+{
+	var
+		aText = sText.split(/\r\n|\n/i),
+		sSubject = _.find(aText, function (sTextPart) {
+			return $.trim(sTextPart) !== '';
+		})
+	;
+	
+	sSubject = $.trim(sSubject);
+	if (sSubject.length > 50)
+	{
+		sSubject = sSubject.substring(0, 50);
+	}
+	
+	return sSubject;
+};
+
 CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 {
 	var
@@ -78,7 +97,7 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 			'FolderFullName': 'Notes',
 			'MessageUid': this.sMessageUid,
 			'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
-			'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+			'Subject': this.getSubjectFromText(this.messageText())
 		}
 	;
 	
@@ -163,7 +182,7 @@ CMessagePaneView.prototype.onBind = function ($MailViewDom)
 				'FolderFullName': 'Notes',
 				'MessageUid': this.sMessageUid,
 				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
-				'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+				'Subject': this.getSubjectFromText(this.messageText())
 			}
 		;
 		
@@ -254,7 +273,7 @@ CMessagePaneView.prototype.saveNewNote = function ()
 			'AccountId': MailCache.currentAccountId(),
 			'FolderFullName': oFolder.fullName(),
 			'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
-			'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+			'Subject': this.getSubjectFromText(this.messageText())
 		}
 	;
 	this.isSaving(true);
@@ -293,7 +312,7 @@ CMessagePaneView.prototype.saveEditedNote = function (oMessage)
 				'FolderFullName': oMessage.folder(),
 				'MessageUid': oMessage.uid(),
 				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
-				'Subject': this.messageText().replace(/\r\n/g, ' ').replace(/\n/g, ' ').substring(0, 50)
+				'Subject': this.getSubjectFromText(this.messageText())
 			},
 			oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), oMessage.folder())
 		;
