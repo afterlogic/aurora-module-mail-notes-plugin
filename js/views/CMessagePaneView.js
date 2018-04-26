@@ -77,6 +77,29 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 CMessagePaneView.prototype.ViewTemplate = '%ModuleName%_MessagePaneView';
 CMessagePaneView.prototype.ViewConstructorName = 'CMessagePaneView';
 
+/**
+ * Checks if there are changes in message pane.
+ * @returns {Boolean}
+ */
+CMessagePaneView.prototype.hasUnsavedChanges = function ()
+{
+	var oMessage = this.currentMessage();
+	return (!oMessage || this.sMessageUid === oMessage.uid()) && this.sMessageText !== this.messageText();
+};
+
+/**
+ * Discards changes in message pane.
+ */
+CMessagePaneView.prototype.discardChanges = function ()
+{
+	if (!this.currentMessage())
+	{
+		this.sMessageUid = '';
+		this.sMessageText = '';
+		this.messageText('');
+	}
+};
+
 CMessagePaneView.prototype.getSubjectFromText = function (sText)
 {
 	var
@@ -97,42 +120,7 @@ CMessagePaneView.prototype.getSubjectFromText = function (sText)
 
 CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 {
-	var
-		oMessage = this.currentMessage(),
-		oParameters = {
-			'AccountId': MailCache.currentAccountId(),
-			'FolderFullName': 'Notes',
-			'MessageUid': this.sMessageUid,
-			'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
-			'Subject': this.getSubjectFromText(this.messageText())
-		}
-	;
-	
-	if (!oMessage && this.sMessageText !== this.messageText())
-	{
-		Popups.showPopup(ConfirmPopup, [
-			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
-			_.bind(function (bSave) {
-				if (bSave)
-				{
-					var oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), 'Notes');
-					oFolder.markDeletedByUids([oParameters.MessageUid]);
-					MailCache.excludeDeletedMessages();
-					this.sMessageText = this.messageText();
-					Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
-						if (!oResponse.Result)
-						{
-							Api.showErrorByCode(oResponse, TextUtils.i18n('%MODULENAME%/ERROR_NOTE_SAVING'));
-						}
-						MailCache.executeCheckMail(true);
-					}, this);
-				}
-			}, this),
-			'',
-			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
-			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
-		]);
-	}
+	var oMessage = this.currentMessage();
 	
 	if (oMessage)
 	{
@@ -180,50 +168,6 @@ CMessagePaneView.prototype.onBind = function ($MailViewDom)
 			this.saveNote();
 		}
 	}, this));
-	
-	App.subscribeEvent('CoreWebclient::SelectListItem::before', _.bind(function (oParams) {
-		var
-			oMessage = oParams.Item,
-			oParameters = {
-				'AccountId': MailCache.currentAccountId(),
-				'FolderFullName': 'Notes',
-				'MessageUid': this.sMessageUid,
-				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
-				'Subject': this.getSubjectFromText(this.messageText())
-			}
-		;
-		
-		if (oMessage  && oMessage.constructor.name === 'CMessageModel' && this.sMessageUid !== oMessage.uid() && this.sMessageText !== this.messageText())
-		{
-			oParams.Cancel = true;
-			Popups.showPopup(ConfirmPopup, [
-				TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
-				_.bind(function (bSave) {
-					if (bSave)
-					{
-						var oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), 'Notes');
-						oFolder.markDeletedByUids([oParameters.MessageUid]);
-						MailCache.excludeDeletedMessages();
-						this.sMessageText = this.messageText();
-						Ajax.send('%ModuleName%', 'SaveNote', oParameters, function (oResponse) {
-							if (!oResponse.Result)
-							{
-								Api.showErrorByCode(oResponse, TextUtils.i18n('%MODULENAME%/ERROR_NOTE_SAVING'));
-							}
-							MailCache.executeCheckMail(true);
-						}, this);
-					}
-					if (_.isFunction(oParams.ProceedSelectionHandler))
-					{
-						oParams.ProceedSelectionHandler();
-					}
-				}, this),
-				'',
-				TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
-				TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
-			]);
-		}
-	}, this));
 };
 
 CMessagePaneView.prototype.onRoute = function (aParams, oParams)
@@ -239,25 +183,6 @@ CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 		this.createMode(false);
 	}
 	this.isSaving(false);
-};
-
-CMessagePaneView.prototype.onHide = function ()
-{
-	if (this.sMessageText !== this.messageText())
-	{
-		Popups.showPopup(ConfirmPopup, [
-			TextUtils.i18n('%MODULENAME%/CONFIRM_NOTE_NOT_SAVED'),
-			_.bind(function (bSave) {
-				if (bSave)
-				{
-					this.saveEditedNote();
-				}
-			}, this),
-			'',
-			TextUtils.i18n('%MODULENAME%/ACTION_SAVE'),
-			TextUtils.i18n('%MODULENAME%/ACTION_DISCARD')
-		]);
-	}
 };
 
 CMessagePaneView.prototype.saveNote = function ()
