@@ -34,7 +34,11 @@ class Module extends \Aurora\System\Module\AbstractModule
 		$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'));
 		if (empty($aResult))
 		{
-			$oMailModule->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
+			try
+			{
+				$oMailModule->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
+			}
+			catch (\Exception $oException) {}
 		}
 	}
 	
