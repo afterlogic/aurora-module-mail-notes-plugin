@@ -130,7 +130,7 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 		}
 		else
 		{
-			this.messageText(GetPlainText($(oMessage.text()).html()));
+			this.messageText(GetPlainText(oMessage.textRaw()));
 		}
 		this.sMessageUid = oMessage.uid();
 		this.sMessageText = this.messageText();
