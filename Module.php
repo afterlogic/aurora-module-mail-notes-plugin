@@ -29,16 +29,19 @@ class Module extends \Aurora\System\Module\AbstractModule
 		
 		$iAccountID = $aArgs['AccountID'];
 		$oAccount = $oApiAccountsManager->getAccountById($iAccountID);
-		$oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
-		$sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
-		$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'));
-		if (empty($aResult))
+		if ($oAccount)
 		{
-			try
+			$oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
+			$sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
+			$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'));
+			if (empty($aResult))
 			{
-				$oMailModule->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
+				try
+				{
+					$oMailModule->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
+				}
+				catch (\Exception $oException) {}
 			}
-			catch (\Exception $oException) {}
 		}
 	}
 	
