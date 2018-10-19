@@ -5,12 +5,8 @@ var
 	$ = require('jquery'),
 	ko = require('knockout'),
 	
-	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
-	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
-	
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	
-	App = require('%PathToCoreWebclientModule%/js/App.js'),
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	Api = require('%PathToCoreWebclientModule%/js/Api.js'),
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
@@ -76,6 +72,16 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 
 CMessagePaneView.prototype.ViewTemplate = '%ModuleName%_MessagePaneView';
 CMessagePaneView.prototype.ViewConstructorName = 'CMessagePaneView';
+
+CMessagePaneView.prototype.onShow = function ()
+{
+	this.bShown = true;
+};
+
+CMessagePaneView.prototype.onHide = function ()
+{
+	this.bShown = false;
+};
 
 /**
  * Checks if there are changes in message pane.
@@ -214,13 +220,16 @@ CMessagePaneView.prototype.saveNewNote = function ()
 		this.isSaving(false);
 		if (oResponse.Result)
 		{
-			var sbscr = MailCache.messagesLoading.subscribe(function () {
-				if (!MailCache.messagesLoading())
-				{
-					this.fRouteMessageView(oParameters.FolderFullName, oResponse.Result);
-					sbscr.dispose();
-				}
-			}, this);
+			if (this.bShown)
+			{
+				var sbscr = MailCache.messagesLoading.subscribe(function () {
+					if (this.bShown && !MailCache.messagesLoading() && !this.currentMessage())
+					{
+						this.fRouteMessageView(oParameters.FolderFullName, oResponse.Result);
+						sbscr.dispose();
+					}
+				}, this);
+			}
 		}
 		else
 		{
@@ -256,13 +265,16 @@ CMessagePaneView.prototype.saveEditedNote = function (oMessage)
 			this.isSaving(false);
 			if (oResponse.Result)
 			{
-				var sbscr = MailCache.messagesLoading.subscribe(function () {
-					if (!MailCache.messagesLoading())
-					{
-						this.fRouteMessageView(oParameters.FolderFullName, oResponse.Result);
-						sbscr.dispose();
-					}
-				}, this);
+				if (this.bShown)
+				{
+					var sbscr = MailCache.messagesLoading.subscribe(function () {
+						if (this.bShown && !MailCache.messagesLoading() && !this.currentMessage())
+						{
+							this.fRouteMessageView(oParameters.FolderFullName, oResponse.Result);
+							sbscr.dispose();
+						}
+					}, this);
+				}
 			}
 			else
 			{
