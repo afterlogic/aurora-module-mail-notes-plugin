@@ -24,8 +24,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 	public function onBeforeGetFolders(&$aArgs, &$mResult)
 	{
 		$oMailModule = \Aurora\System\Api::GetModule('Mail');
-		$oApiAccountsManager = $oMailModule->oApiAccountsManager;
-		$oApiMailManager = $oMailModule->oApiMailManager;
+		$oApiAccountsManager = $oMailModule->getAccountsManager();
+		$oApiMailManager = $oMailModule->getMailManager();
 		
 		$iAccountID = $aArgs['AccountID'];
 		$oAccount = $oApiAccountsManager->getAccountById($iAccountID);
@@ -68,9 +68,9 @@ class Module extends \Aurora\System\Module\AbstractModule
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 		$oMailModule = \Aurora\System\Api::GetModule('Mail');
-		$oApiAccountsManager = $oMailModule->oApiAccountsManager;
+		$oApiAccountsManager = $oMailModule->getAccountsManager();
 		$oAccount = $oApiAccountsManager->getAccountById($AccountId);
-		$oApiMailManager = $oMailModule->oApiMailManager;
+		$oApiMailManager = $oMailModule->getMailManager();
 		
 		$oMessage = \MailSo\Mime\Message::NewInstance();
 		$oMessage->RegenerateMessageId();
