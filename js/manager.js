@@ -3,7 +3,6 @@
 module.exports = function (oAppData) {
 	var
 		_ = require('underscore'),
-		$ = require('jquery'),
 		ko = require('knockout'),
 		
 		TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
@@ -17,6 +16,7 @@ module.exports = function (oAppData) {
 	{
 		return {
 			start: function (oModulesManager) {
+				$('html').addClass('MailNotesPlugin');
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
