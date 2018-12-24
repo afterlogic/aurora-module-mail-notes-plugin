@@ -9,7 +9,9 @@ module.exports = function (oAppData) {
 				
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 
-		bNormalUser = App.getUserRole() === Enums.UserRole.NormalUser
+		bNormalUser = App.getUserRole() === Enums.UserRole.NormalUser,
+		
+		sNotesFullName = 'Notes'
 	;
 	
 	if (bNormalUser)
@@ -21,6 +23,7 @@ module.exports = function (oAppData) {
 					if (oParams.Name === 'CMailView')
 					{
 						var
+							koFolderList = oParams.MailCache.folderList,
 							koCurrentFolder = ko.computed(function () {
 								return oParams.MailCache.folderList().currentFolder();
 							}),
@@ -28,8 +31,16 @@ module.exports = function (oAppData) {
 							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
 						;
 						koCurrentFolder.subscribe(function () {
-							var sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
-							if (sFullName === 'Notes')
+							var
+								sNameSpace = koFolderList().sNamespaceFolder,
+								sDelimiter = koFolderList().sDelimiter,
+								sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : ''
+							;
+							if (sNameSpace !== '')
+							{
+								sNotesFullName = sNameSpace + sDelimiter + 'Notes';
+							}
+							if (sFullName === sNotesFullName)
 							{
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
@@ -56,7 +67,7 @@ module.exports = function (oAppData) {
 						;
 						koCurrentFolder.subscribe(function () {
 							var sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
-							if (sFullName === 'Notes')
+							if (sFullName === sNotesFullName)
 							{
 								oParams.View.customMessageItemViewTemplate('%ModuleName%_MessageItemView');
 							}
@@ -68,7 +79,7 @@ module.exports = function (oAppData) {
 					}
 				});
 				App.subscribeEvent('MailWebclient::MessageDblClick::before', _.bind(function (oParams) {
-					if (oParams.Message && oParams.Message.folder() === 'Notes')
+					if (oParams.Message && oParams.Message.folder() === sNotesFullName)
 					{
 						oParams.Cancel = true;
 					}
