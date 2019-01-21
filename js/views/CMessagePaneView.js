@@ -68,6 +68,8 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 	this.saveButtonText = ko.computed(function () {
 		return this.isSaving() ? TextUtils.i18n('COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS') : TextUtils.i18n('COREWEBCLIENT/ACTION_SAVE');
 	}, this);
+	
+	this.bBinded = false;
 }
 
 CMessagePaneView.prototype.ViewTemplate = '%ModuleName%_MessagePaneView';
@@ -163,17 +165,22 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
  */
 CMessagePaneView.prototype.onBind = function ($MailViewDom)
 {
-	ModulesManager.run('SessionTimeoutWeblient', 'registerFunction', [_.bind(function () {
-		this.saveNote();
-	}, this)]);
-	
-	$(document).on('keydown', $.proxy(function(ev) {
-		if (ev.ctrlKey && ev.keyCode === Enums.Key.s)
-		{
-			ev.preventDefault();
+	if (!this.bBinded)
+	{
+		ModulesManager.run('SessionTimeoutWeblient', 'registerFunction', [_.bind(function () {
 			this.saveNote();
-		}
-	}, this));
+		}, this)]);
+
+		$(document).on('keydown', $.proxy(function(ev) {
+			if (ev.ctrlKey && ev.keyCode === Enums.Key.s)
+			{
+				ev.preventDefault();
+				this.saveNote();
+			}
+		}, this));
+
+		this.bBinded = true;
+	}
 };
 
 CMessagePaneView.prototype.onRoute = function (aParams, oParams)
