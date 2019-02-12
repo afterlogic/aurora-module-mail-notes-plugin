@@ -19,6 +19,13 @@ module.exports = function (oAppData) {
 		return {
 			start: function (oModulesManager) {
 				$('html').addClass('MailNotesPlugin');
+				App.subscribeEvent('MailWebclient::ParseFolder::after', function (oFolder) {
+					if (oFolder.fullName() === sNotesFullName)
+					{
+						oFolder.displayName = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'));
+						oFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
+					}
+				});
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
