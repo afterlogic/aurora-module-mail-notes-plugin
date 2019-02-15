@@ -11,21 +11,37 @@ module.exports = function (oAppData) {
 
 		bNormalUser = App.getUserRole() === Enums.UserRole.NormalUser,
 		
-		sNotesFullName = 'Notes'
+		sNotesName = 'Notes',
+		sNotesFullName = sNotesName
 	;
+	
+	function SetNotesFolder(koFolderList)
+	{
+		var
+			sNameSpace = koFolderList().sNamespaceFolder,
+			sDelimiter = koFolderList().sDelimiter
+		;
+		if (sNameSpace !== '')
+		{
+			sNotesFullName = sNameSpace + sDelimiter + sNotesName;
+		}
+		else
+		{
+			sNotesFullName = sNotesName;
+		}
+		var oNotesFolder = koFolderList().getFolderByFullName(sNotesFullName);
+		if (oNotesFolder)
+		{
+			oNotesFolder.displayName = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'));
+			oNotesFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
+		}
+	}
 	
 	if (bNormalUser)
 	{
 		return {
 			start: function (oModulesManager) {
 				$('html').addClass('MailNotesPlugin');
-				App.subscribeEvent('MailWebclient::ParseFolder::after', function (oFolder) {
-					if (oFolder.fullName() === sNotesFullName)
-					{
-						oFolder.displayName = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'));
-						oFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
-					}
-				});
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
@@ -37,16 +53,12 @@ module.exports = function (oAppData) {
 							CMessagePaneView = require('modules/%ModuleName%/js/views/CMessagePaneView.js'),
 							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
 						;
+						SetNotesFolder(koFolderList);
+						koFolderList.subscribe(function () {
+							SetNotesFolder(koFolderList);
+						});
 						koCurrentFolder.subscribe(function () {
-							var
-								sNameSpace = koFolderList().sNamespaceFolder,
-								sDelimiter = koFolderList().sDelimiter,
-								sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : ''
-							;
-							if (sNameSpace !== '')
-							{
-								sNotesFullName = sNameSpace + sDelimiter + 'Notes';
-							}
+							var sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
 							if (sFullName === sNotesFullName)
 							{
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
