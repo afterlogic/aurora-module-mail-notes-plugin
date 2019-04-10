@@ -33,7 +33,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		{
 			$oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
 			$sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
-			$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'));
+			$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'), false);
 			if (empty($aResult))
 			{
 				try
