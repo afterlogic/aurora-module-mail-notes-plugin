@@ -217,7 +217,7 @@ CMessagePaneView.prototype.saveNewNote = function ()
 		oParameters = {
 			'AccountId': MailCache.currentAccountId(),
 			'FolderFullName': oFolder.fullName(),
-			'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
+			'Text': TextUtils.encodeHtml(this.messageText()).replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
 			'Subject': this.getSubjectFromText(this.messageText())
 		}
 	;
@@ -259,7 +259,7 @@ CMessagePaneView.prototype.saveEditedNote = function (oMessage)
 				'AccountId': MailCache.currentAccountId(),
 				'FolderFullName': oMessage.folder(),
 				'MessageUid': oMessage.uid(),
-				'Text': this.messageText().replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
+				'Text': TextUtils.encodeHtml(this.messageText()).replace(/\n/g, '<br />').replace(/\r\n/g, '<br />'),
 				'Subject': this.getSubjectFromText(this.messageText())
 			},
 			oFolder = MailCache.getFolderByFullName(MailCache.currentAccountId(), oMessage.folder())
