@@ -23,7 +23,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 	
 	public function onBeforeGetFolders(&$aArgs, &$mResult)
 	{
-		$oMailModule = \Aurora\System\Api::GetModule('Mail');
+		$oMailModule = \Aurora\Modules\Mail\Module::getInstance();
 		$oApiAccountsManager = $oMailModule->getAccountsManager();
 		$oApiMailManager = $oMailModule->getMailManager();
 		
@@ -38,7 +38,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 			{
 				try
 				{
-					$oMailModule->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
+					\Aurora\Modules\Mail\Module::Decorator()->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
 				}
 				catch (\Exception $oException) {}
 			}
