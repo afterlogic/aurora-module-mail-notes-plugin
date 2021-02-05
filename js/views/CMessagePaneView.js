@@ -185,7 +185,7 @@ CMessagePaneView.prototype.onBind = function ($MailViewDom)
 
 CMessagePaneView.prototype.onRoute = function (aParams, oParams)
 {
-	MailCache.setCurrentMessage(oParams.Uid, oParams.Folder);
+	MailCache.setCurrentMessage(MailCache.currentAccountId(), oParams.Folder, oParams.Uid);
 	if (oParams.Custom === 'create-note')
 	{
 		this.messageText('');
