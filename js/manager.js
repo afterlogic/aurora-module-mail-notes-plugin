@@ -88,10 +88,6 @@ module.exports = function (oAppData) {
 							{
 								oParams.View.customMessageItemViewTemplate('%ModuleName%_MessageItemView');
 							}
-							else
-							{
-								oParams.View.customMessageItemViewTemplate('');
-							}
 						});
 					}
 				});
