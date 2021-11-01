@@ -19,6 +19,8 @@ class Module extends \Aurora\System\Module\AbstractModule
 	public function init()
 	{
 		$this->subscribeEvent('Mail::GetFolders::before', array($this, 'onBeforeGetFolders'));
+		$this->subscribeEvent('Mail::GetMessages::before', array($this, 'onBeforeGetMessages'));
+		$this->subscribeEvent('Mail::GetMessages::after', array($this, 'onAfterGetMessages'));
 	}
 
 	public function onBeforeGetFolders(&$aArgs, &$mResult)
@@ -42,6 +44,25 @@ class Module extends \Aurora\System\Module\AbstractModule
 				}
 				catch (\Exception $oException) {}
 			}
+		}
+	}
+	
+	public function onBeforeGetMessages(&$aArgs, &$mResult)
+	{
+		if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['Search']) && !empty($aArgs['Search']))
+		{
+			$aArgs['ActualSearch'] = $aArgs['Search'];
+			$aArgs['Search'] = sprintf('from:%s to:%s subject:%s text:%s', $aArgs['Search'], $aArgs['Search'], $aArgs['Search'], $aArgs['Search']);
+		}
+	}
+
+	public function onAfterGetMessages(&$aArgs, &$mResult)
+	{
+		if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['ActualSearch']))
+		{
+			$aArgs['Search'] = $aArgs['ActualSearch'];
+			unset($aArgs['ActualSearch']);
+			$mResult->Search = $aArgs['Search'];
 		}
 	}
 
