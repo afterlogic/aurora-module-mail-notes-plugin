@@ -52,7 +52,7 @@ class Module extends \Aurora\System\Module\AbstractModule
 		if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['Search']) && !empty($aArgs['Search']))
 		{
 			$aArgs['ActualSearch'] = $aArgs['Search'];
-			$aArgs['Search'] = sprintf('text:%s', $aArgs['Search'], $aArgs['Search'], $aArgs['Search'], $aArgs['Search']);
+			$aArgs['Search'] = sprintf('text:%s', $aArgs['Search']);
 		}
 	}
 
