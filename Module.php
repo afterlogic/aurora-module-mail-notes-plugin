@@ -16,102 +16,93 @@ namespace Aurora\Modules\MailNotesPlugin;
  */
 class Module extends \Aurora\System\Module\AbstractModule
 {
-	public function init()
-	{
-		$this->subscribeEvent('Mail::GetFolders::before', array($this, 'onBeforeGetFolders'));
-		$this->subscribeEvent('Mail::GetMessages::before', array($this, 'onBeforeGetMessages'));
-		$this->subscribeEvent('Mail::GetMessages::after', array($this, 'onAfterGetMessages'));
-	}
+    public function init()
+    {
+        $this->subscribeEvent('Mail::GetFolders::before', array($this, 'onBeforeGetFolders'));
+        $this->subscribeEvent('Mail::GetMessages::before', array($this, 'onBeforeGetMessages'));
+        $this->subscribeEvent('Mail::GetMessages::after', array($this, 'onAfterGetMessages'));
+    }
 
-	public function onBeforeGetFolders(&$aArgs, &$mResult)
-	{
-		$oMailModule = \Aurora\Modules\Mail\Module::getInstance();
-		$oApiAccountsManager = $oMailModule->getAccountsManager();
-		$oApiMailManager = $oMailModule->getMailManager();
+    public function onBeforeGetFolders(&$aArgs, &$mResult)
+    {
+        $oMailModule = \Aurora\Modules\Mail\Module::getInstance();
+        $oApiAccountsManager = $oMailModule->getAccountsManager();
+        $oApiMailManager = $oMailModule->getMailManager();
 
-		$iAccountID = $aArgs['AccountID'];
-		$oAccount = $oApiAccountsManager->getAccountById($iAccountID);
-		if ($oAccount)
-		{
-			$oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
-			$sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
-			$aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'), false);
-			if (empty($aResult))
-			{
-				try
-				{
-					\Aurora\Modules\Mail\Module::Decorator()->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
-				}
-				catch (\Exception $oException) {}
-			}
-		}
-	}
-	
-	public function onBeforeGetMessages(&$aArgs, &$mResult)
-	{
-		if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['Search']) && !empty($aArgs['Search']))
-		{
-			$aArgs['ActualSearch'] = $aArgs['Search'];
-			$aArgs['Search'] = sprintf('text:%s', $aArgs['Search']);
-		}
-	}
+        $iAccountID = $aArgs['AccountID'];
+        $oAccount = $oApiAccountsManager->getAccountById($iAccountID);
+        if ($oAccount) {
+            $oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
+            $sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
+            $aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'), false);
+            if (empty($aResult)) {
+                try {
+                    \Aurora\Modules\Mail\Module::Decorator()->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
+                } catch (\Exception $oException) {
+                }
+            }
+        }
+    }
 
-	public function onAfterGetMessages(&$aArgs, &$mResult)
-	{
-		if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['ActualSearch']))
-		{
-			$aArgs['Search'] = $aArgs['ActualSearch'];
-			unset($aArgs['ActualSearch']);
-			$mResult->Search = $aArgs['Search'];
-		}
-	}
+    public function onBeforeGetMessages(&$aArgs, &$mResult)
+    {
+        if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['Search']) && !empty($aArgs['Search'])) {
+            $aArgs['ActualSearch'] = $aArgs['Search'];
+            $aArgs['Search'] = sprintf('text:%s', $aArgs['Search']);
+        }
+    }
 
-	protected function populateFromOrigMessage($iAccountId, $FolderFullName, $MessageUid, &$oMessage)
-	{
-		$oOrigMessage = \Aurora\Modules\Mail\Module::Decorator()->GetMessage($iAccountId, $FolderFullName, $MessageUid);
+    public function onAfterGetMessages(&$aArgs, &$mResult)
+    {
+        if (isset($aArgs['Folder']) && $aArgs['Folder'] === 'Notes' && isset($aArgs['ActualSearch'])) {
+            $aArgs['Search'] = $aArgs['ActualSearch'];
+            unset($aArgs['ActualSearch']);
+            $mResult->Search = $aArgs['Search'];
+        }
+    }
 
-		if ($oOrigMessage)
-		{
-			$oFromCollection = $oOrigMessage->getFrom();
-			if (isset($oFromCollection) && $oFromCollection->Count() > 0)
-			{
-				$oMessage->SetFrom($oFromCollection->GetByIndex(0));
-			}
-			$oToCollection = $oOrigMessage->getTo();
-			if (isset($oToCollection) && $oToCollection->Count() > 0)
-			{
-				$oMessage->SetTo($oToCollection);
-			}
-		}
-	}
+    protected function populateFromOrigMessage($iAccountId, $FolderFullName, $MessageUid, &$oMessage)
+    {
+        $oOrigMessage = \Aurora\Modules\Mail\Module::Decorator()->GetMessage($iAccountId, $FolderFullName, $MessageUid);
 
-	public function SaveNote($AccountID, $FolderFullName, $Text, $Subject, $MessageUid = null)
-	{
-		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
-		$oMailModule = \Aurora\System\Api::GetModule('Mail');
-		$oApiAccountsManager = $oMailModule->getAccountsManager();
-		$oAccount = $oApiAccountsManager->getAccountById($AccountID);
-		$oApiMailManager = $oMailModule->getMailManager();
+        if ($oOrigMessage) {
+            $oFromCollection = $oOrigMessage->getFrom();
+            if (isset($oFromCollection) && $oFromCollection->Count() > 0) {
+                $oMessage->SetFrom($oFromCollection->GetByIndex(0));
+            }
+            $oToCollection = $oOrigMessage->getTo();
+            if (isset($oToCollection) && $oToCollection->Count() > 0) {
+                $oMessage->SetTo($oToCollection);
+            }
+        }
+    }
 
-		$oMessage = \MailSo\Mime\Message::NewInstance();
-		$oMessage->RegenerateMessageId();
-		$oMessage->SetSubject($Subject);
-		$oMessage->AddText($Text, true);
-		$oMessage->SetCustomHeader('X-Uniform-Type-Identifier', 'com.apple.mail-note');
-		$oMessage->SetCustomHeader('X-Universally-Unique-Identifier', uniqid());
+    public function SaveNote($AccountID, $FolderFullName, $Text, $Subject, $MessageUid = null)
+    {
+        \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
+        $oMailModule = \Aurora\System\Api::GetModule('Mail');
+        $oApiAccountsManager = $oMailModule->getAccountsManager();
+        $oAccount = $oApiAccountsManager->getAccountById($AccountID);
+        $oApiMailManager = $oMailModule->getMailManager();
 
-		if (!empty($MessageUid))
-		{
-			$this->populateFromOrigMessage($AccountID, $FolderFullName, $MessageUid, $oMessage);
-			$oApiMailManager->deleteMessage($oAccount, $FolderFullName, array($MessageUid));
-		}
+        $oMessage = \MailSo\Mime\Message::NewInstance();
+        $oMessage->RegenerateMessageId();
+        $oMessage->SetSubject($Subject);
+        $oMessage->AddText($Text, true);
+        $oMessage->SetCustomHeader('X-Uniform-Type-Identifier', 'com.apple.mail-note');
+        $oMessage->SetCustomHeader('X-Universally-Unique-Identifier', uniqid());
 
-		$rMessageStream = \MailSo\Base\ResourceRegistry::CreateMemoryResource();
-		$iMessageStreamSize = \MailSo\Base\Utils::MultipleStreamWriter($oMessage->ToStream(true), array($rMessageStream), 8192, true, true, true);
-		$iNewUid = 0;
-		$oApiMailManager->appendMessageFromStream($oAccount, $rMessageStream, $FolderFullName, $iMessageStreamSize, $iNewUid);
-		$oApiMailManager->setMessageFlag($oAccount, $FolderFullName, [$iNewUid], \MailSo\Imap\Enumerations\MessageFlag::SEEN, \Aurora\Modules\Mail\Enums\MessageStoreAction::Add);
+        if (!empty($MessageUid)) {
+            $this->populateFromOrigMessage($AccountID, $FolderFullName, $MessageUid, $oMessage);
+            $oApiMailManager->deleteMessage($oAccount, $FolderFullName, array($MessageUid));
+        }
 
-		return $iNewUid;
-	}
+        $rMessageStream = \MailSo\Base\ResourceRegistry::CreateMemoryResource();
+        $iMessageStreamSize = \MailSo\Base\Utils::MultipleStreamWriter($oMessage->ToStream(true), array($rMessageStream), 8192, true, true, true);
+        $iNewUid = 0;
+        $oApiMailManager->appendMessageFromStream($oAccount, $rMessageStream, $FolderFullName, $iMessageStreamSize, $iNewUid);
+        $oApiMailManager->setMessageFlag($oAccount, $FolderFullName, [$iNewUid], \MailSo\Imap\Enumerations\MessageFlag::SEEN, \Aurora\Modules\Mail\Enums\MessageStoreAction::Add);
+
+        return $iNewUid;
+    }
 }
