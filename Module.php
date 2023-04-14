@@ -23,6 +23,15 @@ class Module extends \Aurora\System\Module\AbstractModule
         $this->subscribeEvent('Mail::GetMessages::after', array($this, 'onAfterGetMessages'));
     }
 
+    /**
+     *
+     * @return Module
+     */
+    public static function Decorator()
+    {
+        return parent::Decorator();
+    }
+
     public function onBeforeGetFolders(&$aArgs, &$mResult)
     {
         $oMailModule = \Aurora\Modules\Mail\Module::getInstance();
