@@ -67,11 +67,11 @@ class Module extends \Aurora\System\Module\AbstractModule
 
         if ($oOrigMessage) {
             $oFromCollection = $oOrigMessage->getFrom();
-            if (isset($oFromCollection) && $oFromCollection->Count() > 0) {
+            if ($oFromCollection && $oFromCollection->Count() > 0) {
                 $oMessage->SetFrom($oFromCollection->GetByIndex(0));
             }
             $oToCollection = $oOrigMessage->getTo();
-            if (isset($oToCollection) && $oToCollection->Count() > 0) {
+            if ($oToCollection && $oToCollection->Count() > 0) {
                 $oMessage->SetTo($oToCollection);
             }
         }
@@ -80,6 +80,7 @@ class Module extends \Aurora\System\Module\AbstractModule
     public function SaveNote($AccountID, $FolderFullName, $Text, $Subject, $MessageUid = null)
     {
         \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
+        /** @var \Aurora\Modules\Mail\Module $oMailModule */
         $oMailModule = \Aurora\System\Api::GetModule('Mail');
         $oApiAccountsManager = $oMailModule->getAccountsManager();
         $oAccount = $oApiAccountsManager->getAccountById($AccountID);
