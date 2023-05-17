@@ -25,7 +25,7 @@ function GetPlainText(sHtml)
 		return (sLink === sLinkName || sClearLink === sLinkName) ? sLink : sLinkName + ' (' + sLink + ')';
 	};
 
-	return sHtml
+	sHtml = sHtml
 		.replace(/\r\n/g, ' ')
 		.replace(/\n/g, ' ')
 		.replace(/<style[^>]*>[^<]*<\/style>/gi, '\n')
@@ -41,6 +41,8 @@ function GetPlainText(sHtml)
 		.replace(/&amp;/g, '&')
 		.replace(/&quot;/g, '"')
 	;
+
+	return $('<div>').html(sHtml).text();
 };
 
 /**
@@ -134,11 +136,11 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 	{
 		if (oMessage.isPlain())
 		{
-			this.messageText(oMessage.textRaw());
+			this.messageText(oMessage.text());
 		}
 		else
 		{
-			this.messageText(GetPlainText(oMessage.textRaw()));
+			this.messageText(GetPlainText(oMessage.text()));
 		}
 		this.sMessageUid = oMessage.uid();
 		this.sMessageText = this.messageText();
