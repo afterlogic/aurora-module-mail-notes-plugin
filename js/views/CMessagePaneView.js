@@ -13,38 +13,6 @@ var
 	MailCache = null
 ;
 
-function GetPlainText(sHtml)
-{
-	if (typeof(sHtml) !=='string')
-	{
-		return '';
-	}
-
-	var fReplacer = function (sMatch, sLink, sLinkName) {
-		var sClearLink = sLink.replace(/(\w{3,4}:\/\/)(.*)/, '$2');
-		return (sLink === sLinkName || sClearLink === sLinkName) ? sLink : sLinkName + ' (' + sLink + ')';
-	};
-
-	sHtml = sHtml
-		.replace(/\r\n/g, ' ')
-		.replace(/\n/g, ' ')
-		.replace(/<style[^>]*>[^<]*<\/style>/gi, '\n')
-		.replace(/<br *\/{0,1}>/gi, '\n')
-		.replace(/<\/p>/gi, '\n')
-		.replace(/(<\/div>)*$/, '')
-		.replace(/<(\/div>)+/gi, '\n')
-		.replace(/<a [^>]*href="([^"]*?)"[^>]*>(.*?)<\/a>/gi, fReplacer)
-		.replace(/<[^>]*>/g, '')
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&amp;/g, '&')
-		.replace(/&quot;/g, '"')
-	;
-
-	return $('<div>').html(sHtml).text();
-};
-
 /**
  * @constructor
  * @param {object} oMailCache
@@ -55,7 +23,6 @@ function CMessagePaneView(oMailCache, fRouteMessageView)
 	MailCache = oMailCache;
 	this.fRouteMessageView = fRouteMessageView;
 	this.currentMessage = MailCache.currentMessage;
-	this.currentMessage.subscribe(this.onCurrentMessageSubscribe, this);
 	this.messageText = ko.observable('');
 	this.messageText.focused = ko.observable(false);
 	ko.computed(function () {
@@ -79,11 +46,13 @@ CMessagePaneView.prototype.ViewConstructorName = 'CMessagePaneView';
 
 CMessagePaneView.prototype.onShow = function ()
 {
+	this.currentMessageSubscription = this.currentMessage.subscribe(this.onCurrentMessageSubscribe, this);
 	this.bShown = true;
 };
 
 CMessagePaneView.prototype.onHide = function ()
 {
+	this.currentMessageSubscription?.dispose();
 	this.bShown = false;
 };
 
@@ -140,7 +109,7 @@ CMessagePaneView.prototype.onCurrentMessageSubscribe = function ()
 		}
 		else
 		{
-			this.messageText(GetPlainText(oMessage.text()));
+			this.messageText(TextUtils.htmlToPlain(oMessage.text()));
 		}
 		this.sMessageUid = oMessage.uid();
 		this.sMessageText = this.messageText();
