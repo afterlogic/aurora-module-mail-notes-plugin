@@ -60,8 +60,8 @@ class Module extends \Aurora\System\Module\AbstractModule
         if ($oAccount) {
             $oNamespace = $oApiMailManager->getFoldersNamespace($oAccount);
             $sNamespace = $oNamespace ? $oNamespace->GetPersonalNamespace() : '';
-            $aResult = $oApiMailManager->getFolderListInformation($oAccount, array($sNamespace . 'Notes'), false);
-            if (empty($aResult)) {
+            $aResult = \Aurora\Modules\Mail\Module::Decorator()->GetRelevantFoldersInformation($iAccountID, array($sNamespace . 'Notes'), false);
+            if (empty($aResult['Counts'])) {
                 try {
                     \Aurora\Modules\Mail\Module::Decorator()->CreateFolder($iAccountID, $sNamespace . 'Notes', '', '/');
                 } catch (\Exception $oException) {
