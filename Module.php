@@ -103,6 +103,17 @@ class Module extends \Aurora\System\Module\AbstractModule
         }
     }
 
+    /**
+     * Creates or updates a note.
+     *
+     * @param int $AccountID
+     * @param string $FolderFullName
+     * @param string $Text
+     * @param string $Subject
+     * @param int $MessageUid
+     *
+     * @return int
+     */
     public function SaveNote($AccountID, $FolderFullName, $Text, $Subject, $MessageUid = null)
     {
         \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
@@ -110,8 +121,13 @@ class Module extends \Aurora\System\Module\AbstractModule
         $oMailModule = \Aurora\System\Api::GetModule('Mail');
         $oApiAccountsManager = $oMailModule->getAccountsManager();
         $oAccount = $oApiAccountsManager->getAccountById($AccountID);
-        $oApiMailManager = $oMailModule->getMailManager();
 
+        $oAuthenticatedUser = \Aurora\System\Api::getAuthenticatedUser();
+        if ($oAccount->IdUser !== $oAuthenticatedUser->Id) {
+            throw new \Aurora\System\Exceptions\ApiException(\Aurora\System\Notifications::AccessDenied, null, 'AccessDenied');
+        }
+
+        $oApiMailManager = $oMailModule->getMailManager();
         $oMessage = \MailSo\Mime\Message::NewInstance();
         $oMessage->RegenerateMessageId();
         $oMessage->SetSubject($Subject);
