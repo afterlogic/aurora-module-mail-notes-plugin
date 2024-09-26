@@ -9,7 +9,7 @@ module.exports = function (oAppData) {
 				
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 
-		ModulesManager = require("%PathToCoreWebclientModule%/js/ModulesManager.js"),
+		ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 		Settings = require('modules/%ModuleName%/js/Settings.js'),
 
 		sNotesName = 'Notes'
@@ -18,7 +18,7 @@ module.exports = function (oAppData) {
 
 	Settings.init(oAppData);
 
-	const headerItem = require("modules/%ModuleName%/js/views/HeaderItemView.js");
+	const headerItem = require('modules/%ModuleName%/js/views/HeaderItemView.js');
 	const itemToReturn = {
 		item: headerItem,
 		name: sNotesName,
@@ -27,8 +27,8 @@ module.exports = function (oAppData) {
 	function getHeaderItemFullName() {
 		try {
 			const URL_FRAGMENT = "#";
-			const { HashModuleName } = ModulesManager.run("MailWebclient", "getSettings");
-			const accountHash = ModulesManager.run("MailWebclient", "getAccountList").getCurrent().hash();
+			const { HashModuleName } = ModulesManager.run('MailWebclient', 'getSettings');
+			const accountHash = ModulesManager.run('MailWebclient', 'getAccountList').getCurrent().hash();
 			return `${URL_FRAGMENT}${HashModuleName}/${accountHash}/${sNotesFullName}`;
 		} catch (error) {
 			return null;
@@ -57,7 +57,7 @@ module.exports = function (oAppData) {
 			start: function (oModulesManager) {
 				$('html').addClass('MailNotesPlugin');
 				if(Settings.DisplayNotesButton){
-					const mailCache = ModulesManager.run("MailWebclient", "getMailCache");
+					const mailCache = ModulesManager.run('MailWebclient', 'getMailCache');
 					SetNotesFolder(mailCache.folderList);
 
 					mailCache.folderList.subscribe(() => {
