@@ -26,10 +26,9 @@ module.exports = function (oAppData) {
 
 	function getHeaderItemFullName() {
 		try {
-			const URL_FRAGMENT = "#";
 			const { HashModuleName } = ModulesManager.run('MailWebclient', 'getSettings');
 			const accountHash = ModulesManager.run('MailWebclient', 'getAccountList').getCurrent().hash();
-			return `${URL_FRAGMENT}${HashModuleName}/${accountHash}/${sNotesFullName}`;
+			return `#${HashModuleName || 'mail'}/${accountHash}/${sNotesFullName}`;
 		} catch (error) {
 			return null;
 		}
