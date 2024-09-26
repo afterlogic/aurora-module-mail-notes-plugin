@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function (oAppData) {
-	var
+	const
 		_ = require('underscore'),
 		ko = require('knockout'),
 		
@@ -9,41 +9,68 @@ module.exports = function (oAppData) {
 				
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 
-		sNotesName = 'Notes',
-		sNotesFullName = sNotesName
+		ModulesManager = require("%PathToCoreWebclientModule%/js/ModulesManager.js"),
+		Settings = require('modules/%ModuleName%/js/Settings.js'),
+
+		sNotesName = 'Notes'
 	;
+	let	sNotesFullName = sNotesName;
+
+	Settings.init(oAppData);
+
+	const headerItem = require("modules/%ModuleName%/js/views/HeaderItemView.js");
+	const itemToReturn = {
+		item: headerItem,
+		name: sNotesName,
+	}
+
+	function getHeaderItemFullName() {
+		try {
+			const URL_FRAGMENT = "#";
+			const { HashModuleName } = ModulesManager.run("MailWebclient", "getSettings");
+			const accountHash = ModulesManager.run("MailWebclient", "getAccountList").getCurrent().hash();
+			return `${URL_FRAGMENT}${HashModuleName}/${accountHash}/${sNotesFullName}`;
+		} catch (error) {
+			return null;
+		}
+	}
+
+	function SetNotesFolder(koFolderList) {
+		const sNameSpace = koFolderList().sNamespaceFolder;
+		const sDelimiter = koFolderList().sDelimiter;
 	
-	function SetNotesFolder(koFolderList)
-	{
-		var
-			sNameSpace = koFolderList().sNamespaceFolder,
-			sDelimiter = koFolderList().sDelimiter
-		;
-		if (sNameSpace !== '')
-		{
+		if (sNameSpace !== '') {
 			sNotesFullName = sNameSpace + sDelimiter + sNotesName;
 		}
-		else
-		{
+		else {
 			sNotesFullName = sNotesName;
 		}
-		var oNotesFolder = koFolderList().getFolderByFullName(sNotesFullName);
-		if (oNotesFolder)
-		{
+		const oNotesFolder = koFolderList().getFolderByFullName(sNotesFullName);
+		if (oNotesFolder){
 			oNotesFolder.displayName = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'));
 			oNotesFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
 		}
 	}
 	
-	if (App.isUserNormalOrTenant())
-	{
-		return {
+	if (App.isUserNormalOrTenant()) {
+		const moduleExports = {
 			start: function (oModulesManager) {
 				$('html').addClass('MailNotesPlugin');
+				if(Settings.DisplayNotesButton){
+					const mailCache = ModulesManager.run("MailWebclient", "getMailCache");
+					SetNotesFolder(mailCache.folderList);
+
+					mailCache.folderList.subscribe(() => {
+						const fullName = getHeaderItemFullName();
+						if (fullName) {
+							headerItem.hash(fullName);
+						}
+					});
+				}
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
-						var
+						const
 							koFolderList = oParams.MailCache.folderList,
 							koCurrentFolder = ko.computed(function () {
 								return oParams.MailCache.folderList().currentFolder();
@@ -56,7 +83,7 @@ module.exports = function (oAppData) {
 							SetNotesFolder(koFolderList);
 						});
 						koCurrentFolder.subscribe(function () {
-							var sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
+							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
 							if (sFullName === sNotesFullName)
 							{
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
@@ -77,13 +104,13 @@ module.exports = function (oAppData) {
 				App.subscribeEvent('MailWebclient::ConstructView::after', function (oParams) {
 					if (oParams.Name === 'CMessageListView' && oParams.MailCache)
 					{
-						var
+						const
 							koCurrentFolder = ko.computed(function () {
 								return oParams.MailCache.folderList().currentFolder();
 							})
 						;
 						koCurrentFolder.subscribe(function () {
-							var sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
+							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
 							if (sFullName === sNotesFullName)
 							{
 								oParams.View.customMessageItemViewTemplate('%ModuleName%_MessageItemView');
@@ -101,8 +128,20 @@ module.exports = function (oAppData) {
 						oParams.Cancel = true;
 					}
 				}, this));
-			}
-		};
+			},
+		}
+		if (Settings.DisplayNotesButton) {
+			moduleExports.getHeaderItem = function () {
+				try {
+					const fullName = getHeaderItemFullName();
+					headerItem.baseHash(fullName);
+					return itemToReturn;
+				} catch (error) {
+					return null;
+				}
+			};
+		}
+		return moduleExports;
 	}
 	
 	return null;

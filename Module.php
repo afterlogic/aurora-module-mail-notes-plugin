@@ -148,4 +148,15 @@ class Module extends \Aurora\System\Module\AbstractModule
 
         return $iNewUid;
     }
+
+    public function GetSettings()
+    {
+        \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
+
+        $aSettings = array(
+            'DisplayNotesButton' => $this->oModuleSettings->DisplayNotesButton,
+        );
+
+        return $aSettings;
+    }
 }

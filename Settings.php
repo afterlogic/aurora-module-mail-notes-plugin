@@ -11,6 +11,7 @@ use Aurora\System\SettingsProperty;
 
 /**
  * @property bool $Disabled
+ * @property bool $DisplayNotesButton
  */
 
 class Settings extends \Aurora\System\Module\Settings
@@ -24,6 +25,12 @@ class Settings extends \Aurora\System\Module\Settings
                 null,
                 "Setting to true disables the module",
             ),
+            "DisplayNotesButton" => new SettingsProperty(
+                false,
+                "bool",
+                null,
+                "Setting to true displays the notes button in tabs bar",
+            )
         ];
     }
 }
