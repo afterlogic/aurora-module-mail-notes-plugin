@@ -51,7 +51,7 @@ module.exports = function (oAppData) {
 		}
 	}
 
-	const newNoteCommand = ko.observable(null);
+	const notesFullPath = ko.observable(null);
 	
 	if (App.isUserNormalOrTenant()) {
 		const moduleExports = {
@@ -61,10 +61,13 @@ module.exports = function (oAppData) {
 					const mailCache = ModulesManager.run('MailWebclient', 'getMailCache');
 					SetNotesFolder(mailCache.folderList);
 
+					// TODO: uncomment when module supports opening create form by direct link
+					// notesFullPath(getHeaderItemFullName());
 					mailCache.folderList.subscribe(() => {
 						const fullName = getHeaderItemFullName();
 						if (fullName) {
 							headerItem.hash(fullName);
+							notesFullPath(fullName);
 						}
 					});
 				}
@@ -72,15 +75,13 @@ module.exports = function (oAppData) {
 					'item': {
 						'title': TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'),
 						'handler': () => {
-							const command = newNoteCommand();
-							if (command && command.enabled()) {
-								command();
+							window.location.hash = '#mail'
+							if (notesFullPath()) {
+								window.location.hash = notesFullPath() + '/custom%3Acreate-note'
 							} else {
-								const newNoteCommandSubscription = newNoteCommand.subscribe((value) => {
-									if(value && _.isFunction(value) && value.enabled()) {
-										value();
-										newNoteCommandSubscription.dispose();
-									}
+								const notesFullPathSubscribtion = notesFullPath.subscribe(function () {
+									window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+									notesFullPathSubscribtion.dispose();
 								});
 							}
 						},
@@ -113,7 +114,6 @@ module.exports = function (oAppData) {
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
 									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note']);
 								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'));
-								newNoteCommand(oParams.View.bigButtonCommand);
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
 							}
 							else
