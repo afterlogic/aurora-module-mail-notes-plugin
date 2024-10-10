@@ -50,6 +50,8 @@ module.exports = function (oAppData) {
 			oNotesFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
 		}
 	}
+
+	const newNoteCommand = ko.observable(null);
 	
 	if (App.isUserNormalOrTenant()) {
 		const moduleExports = {
@@ -66,6 +68,28 @@ module.exports = function (oAppData) {
 						}
 					});
 				}
+				App.broadcastEvent('RegisterNewItemElement', {
+					'item': {
+						'title': TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'),
+						'handler': () => {
+							const command = newNoteCommand();
+							if (command && command.enabled()) {
+								command();
+							} else {
+								const newNoteCommandSubscription = newNoteCommand.subscribe((value) => {
+									if(value && _.isFunction(value) && value.enabled()) {
+										value();
+										newNoteCommandSubscription.dispose();
+									}
+								});
+							}
+						},
+						'hash': getHeaderItemFullName()
+					},
+					'name': '%ModuleName%_NewNote',
+					'order': 2,
+					'column': 1
+				});
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
@@ -89,6 +113,7 @@ module.exports = function (oAppData) {
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
 									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note']);
 								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'));
+								newNoteCommand(oParams.View.bigButtonCommand);
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
 							}
 							else
