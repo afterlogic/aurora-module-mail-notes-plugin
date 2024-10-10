@@ -50,6 +50,8 @@ module.exports = function (oAppData) {
 			oNotesFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
 		}
 	}
+
+	const notesFullPath = ko.observable(null);
 	
 	if (App.isUserNormalOrTenant()) {
 		const moduleExports = {
@@ -59,13 +61,33 @@ module.exports = function (oAppData) {
 					const mailCache = ModulesManager.run('MailWebclient', 'getMailCache');
 					SetNotesFolder(mailCache.folderList);
 
+					// TODO: uncomment when module supports opening create form by direct link
+					// notesFullPath(getHeaderItemFullName());
 					mailCache.folderList.subscribe(() => {
 						const fullName = getHeaderItemFullName();
 						if (fullName) {
 							headerItem.hash(fullName);
+							notesFullPath(fullName);
 						}
 					});
 				}
+				App.broadcastEvent('RegisterNewItemElement', {
+                    'title': TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'),
+                    'handler': () => {
+                        window.location.hash = '#mail'
+                        if (notesFullPath()) {
+                            window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+                        } else {
+                            const notesFullPathSubscribtion = notesFullPath.subscribe(function () {
+                                window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+                                notesFullPathSubscribtion.dispose();
+                            });
+                        }
+                    },
+					'className': 'item_notes',
+					'order': 2,
+					'column': 1
+				});
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
