@@ -72,22 +72,19 @@ module.exports = function (oAppData) {
 					});
 				}
 				App.broadcastEvent('RegisterNewItemElement', {
-					'item': {
-						'title': TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'),
-						'handler': () => {
-							window.location.hash = '#mail'
-							if (notesFullPath()) {
-								window.location.hash = notesFullPath() + '/custom%3Acreate-note'
-							} else {
-								const notesFullPathSubscribtion = notesFullPath.subscribe(function () {
-									window.location.hash = notesFullPath() + '/custom%3Acreate-note'
-									notesFullPathSubscribtion.dispose();
-								});
-							}
-						},
-						'hash': getHeaderItemFullName()
-					},
-					'name': '%ModuleName%_NewNote',
+                    'title': TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'),
+                    'handler': () => {
+                        window.location.hash = '#mail'
+                        if (notesFullPath()) {
+                            window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+                        } else {
+                            const notesFullPathSubscribtion = notesFullPath.subscribe(function () {
+                                window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+                                notesFullPathSubscribtion.dispose();
+                            });
+                        }
+                    },
+					'className': 'item_notes',
 					'order': 2,
 					'column': 1
 				});
