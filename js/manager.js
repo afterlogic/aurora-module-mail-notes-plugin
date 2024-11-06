@@ -6,29 +6,32 @@ module.exports = function (oAppData) {
 		ko = require('knockout'),
 		
 		TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
-				
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
-
 		ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
+
 		Settings = require('modules/%ModuleName%/js/Settings.js'),
 
-		sNotesName = 'Notes'
+		sNotesFolderName = 'Notes'
 	;
-	let	sNotesFullName = sNotesName;
-
 	Settings.init(oAppData);
-
+	
+	let	sNotesFullName = sNotesFolderName;
 	const headerItem = require('modules/%ModuleName%/js/views/HeaderItemView.js');
-	const itemToReturn = {
+	const notesFullHash = ko.observable(null);
+	const mailFullHash = ko.observable(null);
+	const headerItemData = {
 		item: headerItem,
-		name: sNotesName,
+		name: TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'),
 	}
 
-	function getHeaderItemFullName() {
+	function getHeaderItemHashes() {
 		try {
 			const { HashModuleName } = ModulesManager.run('MailWebclient', 'getSettings');
 			const accountHash = ModulesManager.run('MailWebclient', 'getAccountList').getCurrent().hash();
-			return `#${HashModuleName || 'mail'}/${accountHash}/${sNotesFullName}`;
+			return {
+				'mail': `#${HashModuleName || 'mail'}/${accountHash}/INBOX`,
+				'notes': `#${HashModuleName || 'mail'}/${accountHash}/${sNotesFullName}`
+			}
 		} catch (error) {
 			return null;
 		}
@@ -39,10 +42,10 @@ module.exports = function (oAppData) {
 		const sDelimiter = koFolderList().sDelimiter;
 	
 		if (sNameSpace !== '') {
-			sNotesFullName = sNameSpace + sDelimiter + sNotesName;
+			sNotesFullName = sNameSpace + sDelimiter + sNotesFolderName;
 		}
 		else {
-			sNotesFullName = sNotesName;
+			sNotesFullName = sNotesFolderName;
 		}
 		const oNotesFolder = koFolderList().getFolderByFullName(sNotesFullName);
 		if (oNotesFolder){
@@ -51,35 +54,38 @@ module.exports = function (oAppData) {
 		}
 	}
 
-	const notesFullPath = ko.observable(null);
-	
 	if (App.isUserNormalOrTenant()) {
-		const moduleExports = {
+		const oModule = {
 			start: function (oModulesManager) {
 				$('html').addClass('MailNotesPlugin');
+
+				// If separate Notes button is enabled, then getting the Notes folder full hash for tabsbar
 				if(Settings.DisplayNotesButton){
 					const mailCache = ModulesManager.run('MailWebclient', 'getMailCache');
 					SetNotesFolder(mailCache.folderList);
 
 					// TODO: uncomment when module supports opening create form by direct link
-					// notesFullPath(getHeaderItemFullName());
+					// notesFullHash(getHeaderItemHashes());
 					mailCache.folderList.subscribe(() => {
-						const fullName = getHeaderItemFullName();
-						if (fullName) {
-							headerItem.hash(fullName);
-							notesFullPath(fullName);
+						const fullHashes = getHeaderItemHashes();
+						if (fullHashes?.notes) {
+							headerItem.hash(fullHashes.notes);
+							notesFullHash(fullHashes.notes);
+							mailFullHash(fullHashes.mail);
 						}
 					});
 				}
+
+				// attempt to register a Create Note button
 				App.broadcastEvent('RegisterNewItemElement', {
                     'title': TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'),
                     'handler': () => {
                         window.location.hash = '#mail'
-                        if (notesFullPath()) {
-                            window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+                        if (notesFullHash()) {
+                            window.location.hash = notesFullHash() + '/custom%3Acreate-note'
                         } else {
-                            const notesFullPathSubscribtion = notesFullPath.subscribe(function () {
-                                window.location.hash = notesFullPath() + '/custom%3Acreate-note'
+                            const notesFullPathSubscribtion = notesFullHash.subscribe(function () {
+                                window.location.hash = notesFullHash() + '/custom%3Acreate-note'
                                 notesFullPathSubscribtion.dispose();
                             });
                         }
@@ -88,6 +94,7 @@ module.exports = function (oAppData) {
 					'order': 2,
 					'column': 1
 				});
+
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
 					{
@@ -122,6 +129,7 @@ module.exports = function (oAppData) {
 						});
 					}
 				});
+
 				App.subscribeEvent('MailWebclient::ConstructView::after', function (oParams) {
 					if (oParams.Name === 'CMessageListView' && oParams.MailCache)
 					{
@@ -143,6 +151,7 @@ module.exports = function (oAppData) {
 						});
 					}
 				});
+
 				App.subscribeEvent('MailWebclient::MessageDblClick::before', _.bind(function (oParams) {
 					if (oParams.Message && oParams.Message.folder() === sNotesFullName)
 					{
@@ -151,18 +160,35 @@ module.exports = function (oAppData) {
 				}, this));
 			},
 		}
+
+		// Adding Notes button to tabsbar if it's needed
 		if (Settings.DisplayNotesButton) {
-			moduleExports.getHeaderItem = function () {
+			oModule.getHeaderItem = function () {
 				try {
-					const fullName = getHeaderItemFullName();
-					headerItem.baseHash(fullName);
-					return itemToReturn;
+					const fullHashes = getHeaderItemHashes();
+					headerItem.baseHash(fullHashes?.notes);
+					return headerItemData;
 				} catch (error) {
 					return null;
 				}
 			};
+
+			// getting MailWebclient's HeaderItemView and overriding excludedHashes and mainHref properties
+			App.subscribeEvent('MailWebclient::GetHeaderItemView', function (params) {
+				const mailHeaderItem = require('modules/MailWebclient/js/views/HeaderItemView.js');
+
+				mailHeaderItem.excludedHashes = function () {
+					return notesFullHash() ? [notesFullHash()] : []
+				};
+				
+				mailHeaderItem.mainHref = ko.computed(function () {
+					return mailHeaderItem.isCurrent() ? 'javascript: void(0);' : mailFullHash();
+				}, this);
+
+				params.HeaderItemView = mailHeaderItem
+			});
 		}
-		return moduleExports;
+		return oModule;
 	}
 	
 	return null;
