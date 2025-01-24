@@ -20,7 +20,7 @@ module.exports = function (oAppData) {
 		mailFullHash = ko.observable(null),
 		headerItemData = {
 			item: headerItem,
-			name: TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'),
+			name: Settings.HashModuleName,
 		}
 	;
 

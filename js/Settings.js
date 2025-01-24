@@ -8,6 +8,7 @@ const
 
 module.exports = {
 	ServerModuleName: 'MailNotesPlugin',
+	HashModuleName: 'notes',
 	
 	DisplayNotesButton: false,
 	
