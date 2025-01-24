@@ -11,69 +11,72 @@ module.exports = function (oAppData) {
 
 		Settings = require('modules/%ModuleName%/js/Settings.js'),
 
-		sNotesFolderName = 'Notes'
-	;
-	Settings.init(oAppData);
-	
-	let	sNotesFullName = sNotesFolderName;
-	const headerItem = require('modules/%ModuleName%/js/views/HeaderItemView.js');
-	const notesFullHash = ko.observable(null);
-	const mailFullHash = ko.observable(null);
-	const headerItemData = {
-		item: headerItem,
-		name: TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'),
-	}
+		sNotesFolderName = 'Notes',
 
+		CHeaderItemView = require('%PathToCoreWebclientModule%/js/views/CHeaderItemView.js'),
+		headerItem = new CHeaderItemView(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES')),
+
+		notesFullHash = ko.observable(null),
+		mailFullHash = ko.observable(null),
+		headerItemData = {
+			item: headerItem,
+			name: TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'),
+		}
+	;
+
+	let	sNotesFullName = sNotesFolderName
+
+	Settings.init(oAppData)
+	
 	function getHeaderItemHashes() {
 		try {
-			const { HashModuleName } = ModulesManager.run('MailWebclient', 'getSettings');
-			const accountHash = ModulesManager.run('MailWebclient', 'getAccountList').getCurrent().hash();
+			const { HashModuleName } = ModulesManager.run('MailWebclient', 'getSettings')
+			const accountHash = ModulesManager.run('MailWebclient', 'getAccountList').getCurrent().hash()
 			return {
 				'mail': `#${HashModuleName || 'mail'}/${accountHash}/INBOX`,
 				'notes': `#${HashModuleName || 'mail'}/${accountHash}/${sNotesFullName}`
 			}
 		} catch (error) {
-			return null;
+			return null
 		}
 	}
 
-	function SetNotesFolder(koFolderList) {
-		const sNameSpace = koFolderList().sNamespaceFolder;
-		const sDelimiter = koFolderList().sDelimiter;
+	function setNotesFolder(koFolderList) {
+		const sNameSpace = koFolderList().sNamespaceFolder
+		const sDelimiter = koFolderList().sDelimiter
 	
 		if (sNameSpace !== '') {
-			sNotesFullName = sNameSpace + sDelimiter + sNotesFolderName;
+			sNotesFullName = sNameSpace + sDelimiter + sNotesFolderName
+		} else {
+			sNotesFullName = sNotesFolderName
 		}
-		else {
-			sNotesFullName = sNotesFolderName;
-		}
-		const oNotesFolder = koFolderList().getFolderByFullName(sNotesFullName);
-		if (oNotesFolder){
-			oNotesFolder.displayName = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'));
-			oNotesFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'));
+		const oNotesFolder = koFolderList().getFolderByFullName(sNotesFullName)
+		if (oNotesFolder) {
+			oNotesFolder.displayName = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_FOLDER_NOTES'))
+			oNotesFolder.usedAs = ko.observable(TextUtils.i18n('%MODULENAME%/LABEL_USED_AS_NOTES'))
 		}
 	}
 
 	if (App.isUserNormalOrTenant()) {
 		const oModule = {
 			start: function (oModulesManager) {
-				$('html').addClass('MailNotesPlugin');
+				$('html').addClass('MailNotesPlugin')
 
 				// If separate Notes button is enabled, then getting the Notes folder full hash for tabsbar
-				if(Settings.DisplayNotesButton){
-					const mailCache = ModulesManager.run('MailWebclient', 'getMailCache');
-					SetNotesFolder(mailCache.folderList);
+				if (Settings.DisplayNotesButton) {
+					const mailCache = ModulesManager.run('MailWebclient', 'getMailCache')
+					setNotesFolder(mailCache.folderList)
 
 					// TODO: uncomment when module supports opening create form by direct link
 					// notesFullHash(getHeaderItemHashes());
 					mailCache.folderList.subscribe(() => {
-						const fullHashes = getHeaderItemHashes();
+						const fullHashes = getHeaderItemHashes()
 						if (fullHashes?.notes) {
-							headerItem.hash(fullHashes.notes);
-							notesFullHash(fullHashes.notes);
-							mailFullHash(fullHashes.mail);
+							headerItem.hash(fullHashes.notes)
+							notesFullHash(fullHashes.notes)
+							mailFullHash(fullHashes.mail)
 						}
-					});
+					})
 				}
 
 				// attempt to register a Create Note button
@@ -86,14 +89,14 @@ module.exports = function (oAppData) {
                         } else {
                             const notesFullPathSubscribtion = notesFullHash.subscribe(function () {
                                 window.location.hash = notesFullHash() + '/custom%3Acreate-note'
-                                notesFullPathSubscribtion.dispose();
-                            });
+                                notesFullPathSubscribtion.dispose()
+                            })
                         }
                     },
 					'className': 'item_notes',
 					'order': 2,
 					'column': 1
-				});
+				})
 
 				App.subscribeEvent('MailWebclient::ConstructView::before', function (oParams) {
 					if (oParams.Name === 'CMailView')
@@ -101,63 +104,54 @@ module.exports = function (oAppData) {
 						const
 							koFolderList = oParams.MailCache.folderList,
 							koCurrentFolder = ko.computed(function () {
-								return oParams.MailCache.folderList().currentFolder();
+								return oParams.MailCache.folderList().currentFolder()
 							}),
 							CMessagePaneView = require('modules/%ModuleName%/js/views/CMessagePaneView.js'),
 							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
 						;
-						SetNotesFolder(koFolderList);
+						setNotesFolder(koFolderList)
 						koFolderList.subscribe(function () {
-							SetNotesFolder(koFolderList);
+							setNotesFolder(koFolderList)
 						});
 						koCurrentFolder.subscribe(function () {
-							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
-							if (sFullName === sNotesFullName)
-							{
-								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane);
+							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : ''
+							if (sFullName === sNotesFullName) {
+								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane)
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
-									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note']);
-								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'));
-								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark']);
+									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note'])
+								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'))
+								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark'])
+							} else {
+								oParams.View.removeCustomPreviewPane('%ModuleName%')
+								oParams.View.removeCustomBigButton('%ModuleName%')
+								oParams.View.resetDisabledTools('%ModuleName%', [])
 							}
-							else
-							{
-								oParams.View.removeCustomPreviewPane('%ModuleName%');
-								oParams.View.removeCustomBigButton('%ModuleName%');
-								oParams.View.resetDisabledTools('%ModuleName%', []);
-							}
-						});
+						})
 					}
-				});
+				})
 
 				App.subscribeEvent('MailWebclient::ConstructView::after', function (oParams) {
-					if (oParams.Name === 'CMessageListView' && oParams.MailCache)
-					{
-						const
-							koCurrentFolder = ko.computed(function () {
-								return oParams.MailCache.folderList().currentFolder();
-							})
-						;
+					if (oParams.Name === 'CMessageListView' && oParams.MailCache) {
+						const koCurrentFolder = ko.computed(function () {
+							return oParams.MailCache.folderList().currentFolder();
+						})
+
 						koCurrentFolder.subscribe(function () {
-							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : '';
-							if (sFullName === sNotesFullName)
-							{
-								oParams.View.customMessageItemViewTemplate('%ModuleName%_MessageItemView');
+							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : ''
+							if (sFullName === sNotesFullName) {
+								oParams.View.customMessageItemViewTemplate('%ModuleName%_MessageItemView')
+							} else {
+								oParams.View.customMessageItemViewTemplate('')
 							}
-							else
-							{
-								oParams.View.customMessageItemViewTemplate('');
-							}
-						});
+						})
 					}
-				});
+				})
 
 				App.subscribeEvent('MailWebclient::MessageDblClick::before', _.bind(function (oParams) {
-					if (oParams.Message && oParams.Message.folder() === sNotesFullName)
-					{
-						oParams.Cancel = true;
+					if (oParams.Message && oParams.Message.folder() === sNotesFullName) {
+						oParams.Cancel = true
 					}
-				}, this));
+				}, this))
 			},
 		}
 
@@ -165,31 +159,31 @@ module.exports = function (oAppData) {
 		if (Settings.DisplayNotesButton) {
 			oModule.getHeaderItem = function () {
 				try {
-					const fullHashes = getHeaderItemHashes();
-					headerItem.baseHash(fullHashes?.notes);
-					return headerItemData;
+					const fullHashes = getHeaderItemHashes()
+					headerItem.baseHash(fullHashes?.notes)
+					return headerItemData
 				} catch (error) {
-					return null;
+					return null
 				}
-			};
+			}
 
 			// getting MailWebclient's HeaderItemView and overriding excludedHashes and mainHref properties
 			App.subscribeEvent('MailWebclient::GetHeaderItemView', function (params) {
-				const mailHeaderItem = require('modules/MailWebclient/js/views/HeaderItemView.js');
+				const mailHeaderItem = require('modules/MailWebclient/js/views/HeaderItemView.js')
 
 				mailHeaderItem.excludedHashes = function () {
 					return notesFullHash() ? [notesFullHash()] : []
-				};
+				}
 				
 				mailHeaderItem.mainHref = ko.computed(function () {
-					return mailHeaderItem.isCurrent() ? 'javascript: void(0);' : mailFullHash();
-				}, this);
+					return mailHeaderItem.isCurrent() ? 'javascript: void(0);' : mailFullHash()
+				}, this)
 
 				params.HeaderItemView = mailHeaderItem
-			});
+			})
 		}
-		return oModule;
+		return oModule
 	}
 	
-	return null;
-};
+	return null
+}
