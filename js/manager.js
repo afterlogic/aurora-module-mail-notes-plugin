@@ -115,19 +115,19 @@ module.exports = function (oAppData) {
 						});
 						koCurrentFolder.subscribe(function () {
 							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : ''
-							const screen = $('.screen.MailLayout')
+							const screen = oParams.View.$viewDom
 							if (sFullName === sNotesFullName) {
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane)
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
 									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note'])
 								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'))
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark'])
-								screen.addClass('notes')
+								screen.addClass('NotesLayout')
 							} else {
 								oParams.View.removeCustomPreviewPane('%ModuleName%')
 								oParams.View.removeCustomBigButton('%ModuleName%')
 								oParams.View.resetDisabledTools('%ModuleName%', [])
-								screen.removeClass('notes')
+								screen.removeClass('NotesLayout')
 							}
 						})
 					}
@@ -149,7 +149,7 @@ module.exports = function (oAppData) {
 						})
 					}
 				})
-				
+
 				App.subscribeEvent('MailWebclient::MessageDblClick::before', _.bind(function (oParams) {
 					if (oParams.Message && oParams.Message.folder() === sNotesFullName) {
 						oParams.Cancel = true
@@ -158,7 +158,7 @@ module.exports = function (oAppData) {
 
 				$(document).ready(function() {
 					if (Settings.DisplayNotesButton) {
-						$('.screen.MailLayout').addClass('notesSeparated')
+						$('.screen.MailLayout').addClass('NotesLayoutSeparated')
 					}
 				})
 			},
