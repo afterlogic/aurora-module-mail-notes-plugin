@@ -31,7 +31,8 @@ module.exports = function (oAppData) {
 	function getHeaderItemHashes() {
 		try {
 			const { HashModuleName } = ModulesManager.run('MailWebclient', 'getSettings')
-			const accountHash = ModulesManager.run('MailWebclient', 'getAccountList').getCurrent().hash()
+			const accountList = ModulesManager.run('MailWebclient', 'getAccountList')
+			const accountHash = accountList.getDefault().email() ? accountList.getDefault().hash() : accountList.collection()[0]?.hash()
 			return {
 				'mail': `#${HashModuleName || 'mail'}/${accountHash}/INBOX`,
 				'notes': `#${HashModuleName || 'mail'}/${accountHash}/${sNotesFullName}`
