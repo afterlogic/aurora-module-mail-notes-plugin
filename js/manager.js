@@ -110,6 +110,11 @@ module.exports = function (oAppData) {
 							CMessagePaneView = require('modules/%ModuleName%/js/views/CMessagePaneView.js'),
 							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
 						;
+						$(document).ready(function() {
+							if (Settings.DisplayNotesButton) {
+								$('.screen.MailLayout').addClass('NotesLayoutSeparated')
+							}
+						})
 						setNotesFolder(koFolderList)
 						koFolderList.subscribe(function () {
 							setNotesFolder(koFolderList)
@@ -156,12 +161,6 @@ module.exports = function (oAppData) {
 						oParams.Cancel = true
 					}
 				}, this))
-
-				$(document).ready(function() {
-					if (Settings.DisplayNotesButton) {
-						$('.screen.MailLayout').addClass('NotesLayoutSeparated')
-					}
-				})
 			},
 		}
 
