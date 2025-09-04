@@ -105,18 +105,17 @@ module.exports = function (oAppData) {
 						const
 							koFolderList = oParams.MailCache.folderList,
 							koCurrentFolder = ko.computed(function () {
-								return oParams.MailCache.folderList().currentFolder()
+								return koFolderList().currentFolder()
 							}),
 							CMessagePaneView = require('modules/%ModuleName%/js/views/CMessagePaneView.js'),
 							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
 						;
-						$(document).ready(function() {
-							if (Settings.DisplayNotesButton) {
-								$('.screen.MailLayout').addClass('NotesLayoutSeparated')
-							}
-						})
+
 						setNotesFolder(koFolderList)
 						koFolderList.subscribe(function () {
+							if (Settings.DisplayNotesButton) {
+								oParams.View.$viewDom.addClass('NotesLayoutSeparated')
+							}
 							setNotesFolder(koFolderList)
 						});
 						koCurrentFolder.subscribe(function () {
