@@ -8,6 +8,7 @@ module.exports = function (oAppData) {
 		TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 		ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
+		Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 
 		Settings = require('modules/%ModuleName%/js/Settings.js'),
 
@@ -110,12 +111,21 @@ module.exports = function (oAppData) {
 							CMessagePaneView = require('modules/%ModuleName%/js/views/CMessagePaneView.js'),
 							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
 						;
-
 						setNotesFolder(koFolderList)
+						
+
+						Screens.screens.subscribe(function (oScreens) {
+							_.each(oScreens, function (oScreen) {
+								if (oScreen.sModuleName === 'MailWebclient' && 
+									oScreen.ViewConstructorName === 'CMailView' && 
+									oScreen.$viewDom && 
+									Settings.DisplayNotesButton) {
+									oScreen.$viewDom.addClass('NotesLayoutSeparated')
+								}
+							})
+						})
+						
 						koFolderList.subscribe(function () {
-							if (Settings.DisplayNotesButton) {
-								oParams.View.$viewDom.addClass('NotesLayoutSeparated')
-							}
 							setNotesFolder(koFolderList)
 						});
 						koCurrentFolder.subscribe(function () {
