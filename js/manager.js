@@ -166,7 +166,9 @@ module.exports = function (oAppData) {
 				})
 
 				App.subscribeEvent('MailWebclient::MessageDblClick::before', _.bind(function (oParams) {
-					if (oParams.Message && oParams.Message.folder() === sNotesFullName) {
+					const MailSettings = ModulesManager.run('MailWebclient', 'getSettings');
+					const separatedMailMode = !!(MailSettings && MailSettings.layoutMode && MailSettings.layoutMode() === window.Enums.LayoutMode.Separated);
+					if (oParams.Message && oParams.Message.folder() === sNotesFullName && !separatedMailMode) {
 						oParams.Cancel = true
 					}
 				}, this))
