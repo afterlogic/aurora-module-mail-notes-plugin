@@ -154,15 +154,30 @@ CMessagePaneView.prototype.onBind = function ($MailViewDom)
 	}
 };
 
-CMessagePaneView.prototype.onRoute = function (aParams, oParams)
+CMessagePaneView.prototype.onRoute = function (aParams, oParams, CMailView)
 {
-	var oIdentifiers = MailCache.getMessageActualIdentifiers(MailCache.currentAccountId(), oParams.Folder, oParams.Uid);
+	var oIdentifiers = MailCache.getMessageActualIdentifiers(MailCache.currentAccountId(), oParams?.Folder, oParams?.Uid);
 
 	MailCache.setCurrentMessage(oIdentifiers.iAccountId, oIdentifiers.sFolder, oIdentifiers.sUid);
-	if (oParams.Custom === 'create-note')
+	var bCreateNoteInHash = false;
+	try {
+		bCreateNoteInHash = decodeURIComponent(window.location.hash || '').indexOf('create-note') !== -1;
+	} catch (e) {
+		bCreateNoteInHash = (window.location.hash || '').indexOf('create-note') !== -1;
+	}
+	if (oParams?.Custom === 'create-note' || bCreateNoteInHash)
 	{
 		this.messageText('');
 		this.createMode(true);
+		if (CMailView)
+		{
+			// Force show the separated message pane for create-note
+			if (_.isFunction(CMailView.openedSeparatedMessage)) {
+				setTimeout(function () {
+					CMailView.openedSeparatedMessage({});
+				}, 0);
+			}
+		}
 	}
 	else
 	{

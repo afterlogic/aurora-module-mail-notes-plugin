@@ -9,6 +9,7 @@ module.exports = function (oAppData) {
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 		ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 		Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
+		Routing = require('%PathToCoreWebclientModule%/js/Routing.js'),
 
 		Settings = require('modules/%ModuleName%/js/Settings.js'),
 
@@ -138,6 +139,23 @@ module.exports = function (oAppData) {
 								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'))
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark'])
 								screen.addClass('NotesLayout')
+								var aParams = Routing.getCurrentHashArray();
+								var bCreateNoteInHash = false;
+								try {
+									bCreateNoteInHash = decodeURIComponent(window.location.hash || '').indexOf('create-note') !== -1;
+								} catch (e) {
+									bCreateNoteInHash = (window.location.hash || '').indexOf('create-note') !== -1;
+								}
+								if (bCreateNoteInHash) {
+									// ensure the last segment is the custom flag and call pane.onRoute directly
+									setTimeout(function () {
+										if (_.isFunction(oParams.View.messagePane().onRoute)) {
+											var LinksUtils = require('modules/MailWebclient/js/utils/Links.js');
+											var oParamsParsed = _.isFunction(LinksUtils.parseMailbox) ? LinksUtils.parseMailbox(aParams) : { Custom: 'create-note' };
+											oParams.View.messagePane().onRoute(aParams, oParamsParsed, oParams.View);
+										}
+									}, 0);
+								}
 							} else {
 								oParams.View.removeCustomPreviewPane('%ModuleName%')
 								oParams.View.removeCustomBigButton('%ModuleName%')
