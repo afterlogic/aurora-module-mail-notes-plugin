@@ -9,6 +9,7 @@ module.exports = function (oAppData) {
 		App = require('%PathToCoreWebclientModule%/js/App.js'),
 		ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 		Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
+		Routing = require('%PathToCoreWebclientModule%/js/Routing.js'),
 
 		Settings = require('modules/%ModuleName%/js/Settings.js'),
 
@@ -109,7 +110,7 @@ module.exports = function (oAppData) {
 								return koFolderList().currentFolder()
 							}),
 							CMessagePaneView = require('modules/%ModuleName%/js/views/CMessagePaneView.js'),
-							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View))
+							oMessagePane = new CMessagePaneView(oParams.MailCache, _.bind(oParams.View.routeMessageView, oParams.View), oParams.View)
 						;
 						setNotesFolder(koFolderList)
 						
@@ -132,17 +133,23 @@ module.exports = function (oAppData) {
 							const sFullName = koCurrentFolder() ? koCurrentFolder().fullName() : ''
 							const screen = oParams.View.$viewDom
 							if (sFullName === sNotesFullName) {
+								screen.addClass('NotesLayout')
+								
 								oParams.View.setCustomPreviewPane('%ModuleName%', oMessagePane)
 								oParams.View.setCustomBigButton('%ModuleName%', function () {
 									oModulesManager.run('MailWebclient', 'setCustomRouting', [sFullName, 1, '', '', '', 'create-note'])
 								}, TextUtils.i18n('%MODULENAME%/ACTION_NEW_NOTE'))
 								oParams.View.resetDisabledTools('%ModuleName%', ['spam', 'move', 'mark'])
-								screen.addClass('NotesLayout')
+								
+								var aParams = Routing.getCurrentHashArray();
+								aParams.shift(); // remove 'mail' part
+								oMessagePane.onRoute(aParams);
 							} else {
+								screen.removeClass('NotesLayout')
+								
 								oParams.View.removeCustomPreviewPane('%ModuleName%')
 								oParams.View.removeCustomBigButton('%ModuleName%')
 								oParams.View.resetDisabledTools('%ModuleName%', [])
-								screen.removeClass('NotesLayout')
 							}
 						})
 					}
